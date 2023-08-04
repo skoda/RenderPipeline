@@ -1,61 +1,40 @@
-export class Vector {
-  x: number
-  y: number
-  z: number
+import { KeyOfType } from "./utility"
 
-  private constructor(x: number, y: number, z: number) {
-    this.x = x
-    this.y = y
-    this.z = z
+abstract class Vector {
+  get vals(): number[] {
+    throw new Error("Can't instantiate abstract Vector base class.")
   }
 
-  static withXYZ(x: number, y: number, z: number) {
-    return new Vector(x, y, z)
-  }
-
-  static add(l: Vector, r: Vector) {
-    return l.clone().add(r)
-  }
-
-  static dot(l: Vector, r: Vector) {
-    return l.x * r.x + l.y * r.y + l.z * r.z
-  }
-
-  static cross(l: Vector, r: Vector) {
-    return Vector.withXYZ(l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x)
-  }
-
-  clone() {
-    return Vector.withXYZ(this.x, this.y, this.z)
-  }
-
-  scale(v: number) {
-    this.x *= v
-    this.y *= v
-    this.z *= v
+  private perform(method: (k:KeyOfType<this,number>) => void) {
+    for(const k in this.keys)
+      method(k as KeyOfType<this,number>)
     return this
+  }
+
+  scale(s: number) {
+    return this.perform((k: KeyOfType<this,number>) => (this[k]) *= s)
   }
 
   negate() {
     return this.scale(-1)
   }
+}
 
-  normalize() {
-    return this.scale(1 / this.length)
+export class Vector2 extends Vector {
+  x = 0
+  y = 0
+
+  get vals() {
+    return [this.x,this.y]
+  }
+    
+  private constructor() {
+    super()
   }
 
-  add(color: Vector) {
-    this.x += color.x
-    this.y += color.y
-    this.z += color.z
-    return this
-  }
 
-  get lengthSquared() {
-    return Vector.dot(this, this)
-  }
 
-  get length() {
-    return Math.sqrt(this.lengthSquared)
+  static withXY(x: number, y: number) {
+    return new Vector2(x, y)
   }
 }
