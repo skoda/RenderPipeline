@@ -1,40 +1,71 @@
-import { KeyOfType } from "./utility"
-
-abstract class Vector {
-  get vals(): number[] {
-    throw new Error("Can't instantiate abstract Vector base class.")
+// Vector base class with generic methods for a number
+// of vector-like types.
+export default abstract class Vector extends Array<number> {
+  constructor(values: number[]) {
+    super(...values)
+    Object.seal(this)
   }
 
-  private perform(method: (k:KeyOfType<this,number>) => void) {
-    for(const k in this.keys)
-      method(k as KeyOfType<this,number>)
+  abstract clone(): Vector
+
+  static add<T extends Vector>(l: T, r: T) {
+    return l.clone().add(r)
+  }
+
+  static subtract<T extends Vector>(l: T, r: T) {
+    return l.clone().subtract(r)
+  }
+
+  static multiply<T extends Vector>(l: T, r: T) {
+    return l.clone().multiply(r)
+  }
+
+  static dot<T extends Vector>(l: T, r: T) {
+    return l.dot(r)
+  }
+
+  each(fn: (i: number) => void) {
+    for (const i of this.keys()) fn(i)
     return this
   }
 
   scale(s: number) {
-    return this.perform((k: KeyOfType<this,number>) => (this[k]) *= s)
+    return this.each((i) => (this[i] *= s))
   }
 
   negate() {
     return this.scale(-1)
   }
-}
 
-export class Vector2 extends Vector {
-  x = 0
-  y = 0
-
-  get vals() {
-    return [this.x,this.y]
-  }
-    
-  private constructor() {
-    super()
+  normalize(s = 1) {
+    return this.scale(s / this.length)
   }
 
+  sum() {
+    return this.reduce((t, v) => t + v)
+  }
 
+  add(vector: this) {
+    return this.each((i) => (this[i] += vector[i]))
+  }
 
-  static withXY(x: number, y: number) {
-    return new Vector2(x, y)
+  subtract(vector: this) {
+    return this.each((i) => (this[i] -= vector[i]))
+  }
+
+  multiply(vector: this) {
+    return this.each((i) => (this[i] *= vector[i]))
+  }
+
+  dot(vector: this) {
+    return this.clone().multiply(vector).sum()
+  }
+
+  get lengthSquared() {
+    return this.dot(this)
+  }
+
+  get length() {
+    return Math.sqrt(this.lengthSquared)
   }
 }

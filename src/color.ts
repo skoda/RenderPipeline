@@ -1,14 +1,30 @@
 import { clamp } from './utility'
+import Vector from './vector'
 
-export class Color {
-  r: number
-  g: number
-  b: number
+export class Color extends Vector {
+  get r() {
+    return this[0]
+  }
+  set r(r: number) {
+    this[0] = r
+  }
+
+  get g() {
+    return this[1]
+  }
+  set g(g: number) {
+    this[1] = g
+  }
+
+  get b() {
+    return this[2]
+  }
+  set b(b: number) {
+    this[2] = b
+  }
 
   private constructor(r: number, g: number, b: number) {
-    this.r = r
-    this.g = g
-    this.b = b
+    super([r, g, b])
   }
 
   static withRGB(r: number, g: number, b: number) {
@@ -25,18 +41,6 @@ export class Color {
 
   static withWhite() {
     return Color.withValue(1)
-  }
-
-  static add(l: Color, r: Color) {
-    return l.clone().add(r)
-  }
-
-  static subtract(l: Color, r: Color) {
-    return l.clone().subtract(r)
-  }
-
-  static multiply(l: Color, r: Color) {
-    return l.clone().multiply(r)
   }
 
   static interpolate(a: Color, b: Color, t: number) {
