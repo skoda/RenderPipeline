@@ -20,6 +20,10 @@ export default abstract class Vector extends Array<number> {
     return l.clone().multiply(r)
   }
 
+  static interpolate<T extends Vector>(l: T, r: T, t: number) {
+    return Vector.subtract(r, l).scale(t).add(l)
+  }
+
   static dot<T extends Vector>(l: T, r: T) {
     return l.dot(r)
   }
@@ -45,6 +49,10 @@ export default abstract class Vector extends Array<number> {
     return this.reduce((t, v) => t + v)
   }
 
+  set(vector: this) {
+    return this.each((i) => (this[i] = vector[i]))
+  }
+
   add(vector: this) {
     return this.each((i) => (this[i] += vector[i]))
   }
@@ -59,6 +67,10 @@ export default abstract class Vector extends Array<number> {
 
   dot(vector: this) {
     return this.clone().multiply(vector).sum()
+  }
+
+  clamp(max: number, min = 0) {
+    return this.each((i) => (this[i] = Math.min(Math.max(this[i], min), max)))
   }
 
   get lengthSquared() {

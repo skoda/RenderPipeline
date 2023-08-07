@@ -1,4 +1,4 @@
-import { Color } from './color'
+import Color from './color'
 import Vector3 from './vector3'
 
 export class Light {
@@ -14,11 +14,11 @@ export class Light {
     this.spec = spec.clone()
   }
 
-  withPositionAndColors(position: Vector3, ambient: Color, diffuse: Color, specular: Color) {
-    return new Light(position, ambient, diffuse, specular)
-  }
-
   clone() {
     return this.withPositionAndColors(this.pos, this.ambt, this.diff, this.spec)
+  }
+
+  withPositionAndColors(position: Vector3, ambient: Color, diffuse: Color, specular: Color) {
+    return new Light(position, ambient, diffuse, specular)
   }
 }

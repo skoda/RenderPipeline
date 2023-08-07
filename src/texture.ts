@@ -15,16 +15,16 @@ export class TextureCoord extends Vector {
     this[1] = v
   }
 
-  static withUV(u: number, v: number) {
-    return new TextureCoord([u, v])
-  }
-
   private constructor(values: number[]) {
     super(values)
   }
 
   clone() {
     return new TextureCoord(this)
+  }
+
+  static withUV(u: number, v: number) {
+    return new TextureCoord([u, v])
   }
 }
 
@@ -33,7 +33,7 @@ export class Texture {
 
   static cache: Record<string, Texture>
 
-  static async withURL(url: string) {
+  static async withURL(url: string): Promise<Texture> {
     if (Texture.cache[url]) return Texture.cache[url]
 
     return new Promise((resolve, reject) => {

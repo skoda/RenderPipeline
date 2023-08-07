@@ -22,6 +22,14 @@ export default class Vector3 extends Vector {
     this[2] = z
   }
 
+  private constructor(values: number[]) {
+    super(values)
+  }
+
+  clone() {
+    return new Vector3(this)
+  }
+
   static withXYZ(x: number, y: number, z: number) {
     return new Vector3([x, y, z])
   }
@@ -32,13 +40,5 @@ export default class Vector3 extends Vector {
 
   static cross(l: Vector3, r: Vector3) {
     return Vector3.withXYZ(l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x)
-  }
-
-  private constructor(values: number[]) {
-    super(values)
-  }
-
-  clone() {
-    return new Vector3(this)
   }
 }
