@@ -131,17 +131,25 @@ export default class Matrix extends Array<Vector4> {
     )
   }
 
-  private _column(index: MatrixIndex) {
+  static multiply(l: Matrix, r: Matrix) {
+    return l.clone().multiplyMatrix(r)
+  }
+
+  row(index: MatrixIndex) {
+    return this[index]
+  }
+
+  column(index: MatrixIndex) {
     const [x, y, z, w] = this.map((r) => r[index])
     return Vector4.withXYZW(x, y, z, w)
   }
 
   multiplyMatrix(matrix: Matrix) {
     // Get right-hand side columns as vectors once
-    const c0 = matrix._column(0)
-    const c1 = matrix._column(1)
-    const c2 = matrix._column(2)
-    const c3 = matrix._column(3)
+    const c0 = matrix.column(0)
+    const c1 = matrix.column(1)
+    const c2 = matrix.column(2)
+    const c3 = matrix.column(3)
     this.forEach((r, i) => (this[i] = Vector4.withXYZW(r.dot(c0), r.dot(c1), r.dot(c2), r.dot(c3))))
     return this
   }
