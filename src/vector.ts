@@ -9,19 +9,19 @@ export default abstract class Vector extends Array<number> {
   abstract clone(): Vector
 
   static add<T extends Vector>(l: T, r: T) {
-    return l.clone().add(r)
+    return l.clone().add(r) as T
   }
 
   static subtract<T extends Vector>(l: T, r: T) {
-    return l.clone().subtract(r)
+    return l.clone().subtract(r) as T
   }
 
   static multiply<T extends Vector>(l: T, r: T) {
-    return l.clone().multiply(r)
+    return l.clone().multiply(r) as T
   }
 
   static interpolate<T extends Vector>(l: T, r: T, t: number) {
-    return Vector.subtract(r, l).scale(t).add(l)
+    return r.clone().subtract(l).scale(t).add(l) as T
   }
 
   static dot<T extends Vector>(l: T, r: T) {
