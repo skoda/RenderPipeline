@@ -1,4 +1,7 @@
 // Vector base class with generic methods for a number
+
+import clamp from './clamp'
+
 // of vector-like types.
 export default abstract class Vector extends Array<number> {
   constructor(values: number[]) {
@@ -70,7 +73,7 @@ export default abstract class Vector extends Array<number> {
   }
 
   clamp(max: number, min = 0) {
-    return this.each((i) => (this[i] = Math.min(Math.max(this[i], min), max)))
+    return this.each((i) => (this[i] = clamp(this[i], max, min)))
   }
 
   get lengthSquared() {
