@@ -3,9 +3,13 @@
   "version": "0.0.0",
   "repository": "git@github.com:skoda/RenderPipeline.git",
   "license": "MIT",
-  "main": "dest/index",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "build": "tsc --declaration",
+    "build": "tsc",
     "test": "jest",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/"

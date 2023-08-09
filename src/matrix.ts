@@ -11,7 +11,7 @@ export default class Matrix extends Array<Vector4> {
   }
 
   clone() {
-    return new Matrix(this)
+    return new Matrix([...this])
   }
 
   static withVectors(r1: Vector4, r2: Vector4, r3: Vector4, r4: Vector4) {
@@ -139,8 +139,8 @@ export default class Matrix extends Array<Vector4> {
     return this[index]
   }
 
-  column(index: MatrixIndex) {
-    const [x, y, z, w] = this.map((r) => r[index])
+  column(col: MatrixIndex) {
+    const [x, y, z, w] = [0, 1, 2, 3].map((row) => this[row][col], this)
     return Vector4.withXYZW(x, y, z, w)
   }
 

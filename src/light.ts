@@ -15,10 +15,10 @@ export default class Light {
   }
 
   clone() {
-    return this.withPositionAndColors(this.pos, this.ambt, this.diff, this.spec)
+    return Light.withPositionAndColors(this.pos, this.ambt, this.diff, this.spec)
   }
 
-  withPositionAndColors(position: Vector3, ambient: Color, diffuse: Color, specular: Color) {
+  static withPositionAndColors(position: Vector3, ambient: Color, diffuse: Color, specular: Color) {
     return new Light(position, ambient, diffuse, specular)
   }
 }

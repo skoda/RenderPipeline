@@ -43,6 +43,16 @@ export default class Pipeline {
     this.rasterizer = new Rasterizer(this.frameBuffer)
   }
 
+  beginLoop(loop: () => void, vsync = true) {
+    const pipelineLoop = () => {
+      this.present()
+      loop()
+      this.draw()
+      vsync ? window.requestAnimationFrame(pipelineLoop) : setTimeout(pipelineLoop, 0)
+    }
+    pipelineLoop()
+  }
+
   clear() {
     this.renderTarget.context.fillStyle = 'rgb(0, 0, 0)'
     this.renderTarget.context.fillRect(0, 0, this.width, this.height)
