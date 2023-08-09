@@ -45,7 +45,7 @@ export default abstract class Vector extends Array<number> {
   }
 
   normalize(s = 1) {
-    return this.scale(s / this.length)
+    return this.scale(s / this.vectorLength)
   }
 
   sum() {
@@ -80,7 +80,7 @@ export default abstract class Vector extends Array<number> {
     return this.dot(this)
   }
 
-  get length() {
+  get vectorLength() {
     return Math.sqrt(this.lengthSquared)
   }
 }

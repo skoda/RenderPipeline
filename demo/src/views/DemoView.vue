@@ -15,13 +15,13 @@ export default defineComponent({
       Vector3.withXYZ(0, 1, 0),
       Vector3.withXYZ(0, 0, 1)
     )
-    const world = Matrix.translationWithXYZ(0, 0, 4) // Move the world away from the origin 4 units
+    const world = Matrix.translationWithXYZ(0, 0, -4) // Move the world away from the origin 4 units
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,
       pipeline.height,
       Math.PI / 4
     )
-    let angle = 0
+    let angle = Math.PI / 2
 
     pipeline.light = Light.withPositionAndColors(
       Vector3.withXYZ(1, 3, 0),
@@ -36,7 +36,7 @@ export default defineComponent({
     pipeline.projection = projection
 
     pipeline.beginLoop(() => {
-      angle = (angle + 0.05) % (Math.PI * 2)
+      angle = (angle + 0) % (Math.PI * 2)
       pipeline.world = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
     })
   }
