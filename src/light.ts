@@ -1,7 +1,7 @@
 import Color from './color'
 import Vector3 from './vector3'
 
-export class Light {
+export default class Light {
   pos: Vector3
   ambt: Color
   diff: Color

@@ -1,7 +1,8 @@
-import { Light } from './light'
+import Light from './light'
 import Matrix from './matrix'
+import Rasterizer from './rasterizer'
 import Target from './target'
-import { Texture } from './texture'
+import Texture from './texture'
 import Vector3 from './vector3'
 import Vector4 from './vector4'
 import Vertex from './vertex'
@@ -23,6 +24,7 @@ export default class Pipeline {
   screenTarget: Target
   renderTarget: Target
   frameBuffer: ImageData
+  rasterizer: Rasterizer
 
   constructor(renderCanvasId: string) {
     this.world = Matrix.withIdentity()
@@ -38,12 +40,14 @@ export default class Pipeline {
     this.height = this.screenTarget.canvas.height
     this.renderTarget = Target.withDimensions(this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
+    this.rasterizer = new Rasterizer(this.frameBuffer)
   }
 
   clear() {
     this.renderTarget.context.fillStyle = 'rgb(0, 0, 0)'
     this.renderTarget.context.fillRect(0, 0, this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
+    this.rasterizer.setFrameBuffer(this.frameBuffer)
   }
 
   present() {
@@ -132,7 +136,7 @@ export default class Pipeline {
     })
 
     if (counterClockwise(triangle)) {
-      console.log('Draw this triangle')
+      this.rasterizer.triangleDraw(triangle)
     }
   }
 }

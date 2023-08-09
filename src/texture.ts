@@ -30,7 +30,7 @@ export class TextureCoord extends Vector {
   }
 }
 
-export class Texture {
+export default class Texture {
   data: Uint8ClampedArray
   width: number
   height: number
