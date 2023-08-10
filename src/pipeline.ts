@@ -74,6 +74,8 @@ export default class Pipeline {
     const w = this.width / 2.0
     const h = this.height / 2.0
 
+    this.texture && this.rasterizer.setTexture(this.texture)
+
     this.worldView = Matrix.multiply(this.view, this.world)
     this.screenTransform = Matrix.translationWithXYZ(w, h, 0).multiplyMatrix(
       Matrix.scaleWithXYZ(w, -h, -1)

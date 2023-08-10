@@ -32,3 +32,17 @@ test('Vector3 arithmetic', () => {
   v1.multiply(v2)
   expect(v1).toStrictEqual([8, 14, 18])
 })
+
+test('Vector3 dot product', () => {
+  const v1 = Vector3.withXYZ(5, 0, 0)
+  const v2 = Vector3.withXYZ(0, 3, 0)
+  const v3 = Vector3.withXYZ(3, 0, 0)
+  const v4 = Vector3.withXYZ(1, 4, 7)
+  const v5 = Vector3.withXYZ(3, 5, 2)
+  expect(v1.dot(v2)).toBe(0)
+  expect(Vector3.dot(v1, v2)).toBe(0)
+  expect(v1.dot(v3)).toBe(15)
+  expect(Vector3.dot(v1, v3)).toBe(15)
+  expect(v4.dot(v5)).toBe(37)
+  expect(Vector3.dot(v4, v5)).toBe(37)
+})

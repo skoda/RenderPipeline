@@ -73,11 +73,11 @@ export default class Rasterizer {
     let z = l.pos.z // actually 1/z, which properly interpolates
     const mz = (r.pos.z - l.pos.z) / width
     const t = l.tex.clone()
-    const mt = TextureCoord.subtract(r.tex, l.tex)
+    const mt = TextureCoord.subtract(r.tex, l.tex).scale(1 / width)
     const diff = l.diff.clone().scale(256)
     const spec = l.spec.clone().scale(256)
     const mdiff = Color.subtract(r.diff, l.diff).scale(256 / width)
-    const mspec = Color.subtract(r.diff, l.diff).scale(256 / width)
+    const mspec = Color.subtract(r.spec, l.spec).scale(256 / width)
 
     // Shift initial values by ceil() offset to ensure sub-pixel accuracy
     let initialDiff = x - l.pos.x
@@ -110,6 +110,9 @@ export default class Rasterizer {
 
       color.multiply(diff).add(spec)
       this.nextPixel(Math.floor(color.r), Math.floor(color.g), Math.floor(color.b))
+
+      diff.add(mdiff)
+      spec.add(mspec)
     }
   }
 

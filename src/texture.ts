@@ -35,10 +35,10 @@ export default class Texture {
   width: number
   height: number
 
-  static cache: Record<string, Texture>
+  static cache: Record<string, Texture> = {}
 
   static async withURL(url: string): Promise<Texture> {
-    if (Texture.cache[url]) return Texture.cache[url]
+    if (this.cache[url]) return this.cache[url]
 
     return new Promise((resolve, reject) => {
       const img = new Image()
@@ -58,6 +58,7 @@ export default class Texture {
         Texture.cache[url] = texture
         return resolve(texture)
       }
+      img.src = url
     })
   }
 
