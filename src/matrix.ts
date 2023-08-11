@@ -1,87 +1,62 @@
 import Vector3 from './vector3'
 import Vector4 from './vector4'
 
-type MatrixIndex = 0 | 1 | 2 | 3
+type MatrixColumnIndex = 0 | 1 | 2 | 3
 
 // 4x4 Transformation Matrix
-export default class Matrix extends Array<Vector4> {
-  private constructor(values: Vector4[]) {
-    super(...values.map((v) => v.clone()))
-    Object.seal(this)
+export default class Matrix {
+  r0: Vector4
+  r1: Vector4
+  r2: Vector4
+  r3: Vector4
+
+  constructor(r0: Vector4, r1: Vector4, r2: Vector4, r3: Vector4) {
+    this.r0 = r0
+    this.r1 = r1
+    this.r2 = r2
+    this.r3 = r3
   }
 
   clone() {
-    return new Matrix([...this])
-  }
-
-  static withVectors(r1: Vector4, r2: Vector4, r3: Vector4, r4: Vector4) {
-    return new Matrix([r1, r2, r3, r4])
-  }
-
-  static withValues(
-    v11: number,
-    v12: number,
-    v13: number,
-    v14: number,
-    v21: number,
-    v22: number,
-    v23: number,
-    v24: number,
-    v31: number,
-    v32: number,
-    v33: number,
-    v34: number,
-    v41: number,
-    v42: number,
-    v43: number,
-    v44: number
-  ) {
-    return Matrix.withVectors(
-      Vector4.withXYZW(v11, v12, v13, v14),
-      Vector4.withXYZW(v21, v22, v23, v24),
-      Vector4.withXYZW(v31, v32, v33, v34),
-      Vector4.withXYZW(v41, v42, v43, v44)
-    )
+    return new Matrix(this.r0.clone(), this.r1.clone(), this.r2.clone(), this.r3.clone())
   }
 
   static withIdentity() {
-    return Matrix.translationWithVector(Vector3.withOrigin())
+    return Matrix.translationWithXYZ(0, 0, 0)
   }
 
   static scaleWithVector(scale: Vector3) {
-    const [x, y, z] = scale
-    return Matrix.scaleWithXYZ(x, y, z)
+    return Matrix.scaleWithXYZ(scale.x, scale.y, scale.z)
   }
 
-  static scaleWithXYZ(x: number, y: number, z: number) {
-    return Matrix.withVectors(
-      Vector4.withXYZW(x, 0, 0, 0),
-      Vector4.withXYZW(0, y, 0, 0),
-      Vector4.withXYZW(0, 0, z, 0),
-      Vector4.withXYZW(0, 0, 0, 1)
+  static scaleWithXYZ(x: number, y = 1, z = 1) {
+    return new Matrix(
+      new Vector4(x, 0, 0, 0),
+      new Vector4(0, y, 0, 0),
+      new Vector4(0, 0, z, 0),
+      new Vector4(0, 0, 0, 1)
     )
   }
 
   static translationWithVector(translation: Vector3) {
-    const [x, y, z] = translation
-    return Matrix.translationWithXYZ(x, y, z)
+    return Matrix.translationWithXYZ(translation.x, translation.y, translation.z)
   }
 
   static translationWithXYZ(x: number, y: number, z: number) {
-    return Matrix.withVectors(
-      Vector4.withXYZW(1, 0, 0, x),
-      Vector4.withXYZW(0, 1, 0, y),
-      Vector4.withXYZW(0, 0, 1, z),
-      Vector4.withXYZW(0, 0, 0, 1)
+    return new Matrix(
+      new Vector4(1, 0, 0, x),
+      new Vector4(0, 1, 0, y),
+      new Vector4(0, 0, 1, z),
+      new Vector4(0, 0, 0, 1)
     )
   }
 
   static rotationWithBasisVectors(i: Vector3, j: Vector3, k: Vector3) {
-    return Matrix.withVectors(
+    return new Matrix(
       Vector4.withDirection(i.clone().normalize()),
       Vector4.withDirection(j.clone().normalize()),
       Vector4.withDirection(k.clone().normalize()),
-      Vector4.withXYZW(0, 0, 0, 1)
+      new Vector4(0, 0, 0, 1)
     )
   }
 
@@ -92,17 +67,17 @@ export default class Matrix extends Array<Vector4> {
     const av = axis.clone().normalize()
 
     return Matrix.rotationWithBasisVectors(
-      Vector3.withXYZ(
+      new Vector3(
         cost + mcos * av.x * av.x,
         mcos * av.x * av.y - sint * av.z,
         mcos * av.x * av.z + sint * av.y
       ),
-      Vector3.withXYZ(
+      new Vector3(
         mcos * av.x * av.y + sint * av.z,
         cost + mcos * av.y * av.y,
         mcos * av.y * av.z - sint * av.x
       ),
-      Vector3.withXYZ(
+      new Vector3(
         mcos * av.x * av.z - sint * av.y,
         mcos * av.y * av.z + sint * av.x,
         cost + mcos * av.z * av.z
@@ -123,11 +98,11 @@ export default class Matrix extends Array<Vector4> {
     const t = 1.0 / Math.tan(horizontalFieldOfView / 2.0)
     const a = viewportWidth / viewportHeight
 
-    return Matrix.withVectors(
-      Vector4.withXYZW(t, 0, 0, 0),
-      Vector4.withXYZW(0, a * t, 0, 0),
-      Vector4.withXYZW(0, 0, 1, 0),
-      Vector4.withXYZW(0, 1, 0, 0)
+    return new Matrix(
+      new Vector4(t, 0, 0, 0),
+      new Vector4(0, a * t, 0, 0),
+      new Vector4(0, 0, 1, 0),
+      new Vector4(0, 1, 0, 0)
     )
   }
 
@@ -135,13 +110,17 @@ export default class Matrix extends Array<Vector4> {
     return l.clone().multiplyMatrix(r)
   }
 
-  row(index: MatrixIndex) {
-    return this[index]
-  }
-
-  column(col: MatrixIndex) {
-    const [x, y, z, w] = [0, 1, 2, 3].map((row) => this[row][col], this)
-    return Vector4.withXYZW(x, y, z, w)
+  column(col: MatrixColumnIndex) {
+    switch (col) {
+      case 0:
+        return new Vector4(this.r0.x, this.r0.y, this.r0.z, this.r0.w)
+      case 1:
+        return new Vector4(this.r1.x, this.r1.y, this.r1.z, this.r1.w)
+      case 2:
+        return new Vector4(this.r2.x, this.r2.y, this.r2.z, this.r2.w)
+      default:
+        return new Vector4(this.r3.x, this.r3.y, this.r3.z, this.r3.w)
+    }
   }
 
   multiplyMatrix(matrix: Matrix) {
@@ -150,11 +129,14 @@ export default class Matrix extends Array<Vector4> {
     const c1 = matrix.column(1)
     const c2 = matrix.column(2)
     const c3 = matrix.column(3)
-    this.forEach((r, i) => (this[i] = Vector4.withXYZW(r.dot(c0), r.dot(c1), r.dot(c2), r.dot(c3))))
+    this.r0 = new Vector4(this.r0.dot(c0), this.r0.dot(c1), this.r0.dot(c2), this.r0.dot(c3))
+    this.r1 = new Vector4(this.r1.dot(c0), this.r1.dot(c1), this.r1.dot(c2), this.r1.dot(c3))
+    this.r2 = new Vector4(this.r2.dot(c0), this.r2.dot(c1), this.r2.dot(c2), this.r2.dot(c3))
+    this.r3 = new Vector4(this.r3.dot(c0), this.r3.dot(c1), this.r3.dot(c2), this.r3.dot(c3))
     return this
   }
 
   multiplyVector(vector: Vector4) {
-    return Vector3.withXYZ(this[0].dot(vector), this[1].dot(vector), this[2].dot(vector))
+    return new Vector3(this.r0.dot(vector), this.r1.dot(vector), this.r2.dot(vector))
   }
 }

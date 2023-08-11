@@ -22,7 +22,7 @@ export class TextureCoord extends Vector {
   }
 
   clone() {
-    return new TextureCoord(this)
+    return new TextureCoord([...this])
   }
 
   static withUV(u: number, v: number) {

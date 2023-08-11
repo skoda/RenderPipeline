@@ -17,6 +17,7 @@ export default class Pipeline {
   light?: Light
   texture?: Texture
   shininess: number
+  frameRate: number
 
   width: number
   height: number
@@ -34,6 +35,7 @@ export default class Pipeline {
     this.screenTransform = Matrix.withIdentity()
     this.stream = []
     this.shininess = 0
+    this.frameRate = 0
 
     this.screenTarget = Target.withCanvasElementId(renderCanvasId)
     this.width = this.screenTarget.canvas.width
@@ -44,13 +46,22 @@ export default class Pipeline {
   }
 
   beginLoop(loop: () => void, vsync = true) {
+    let frameTimestamp = new Date().getTime()
     const pipelineLoop = () => {
+      frameTimestamp = this.updateFrameRate(frameTimestamp)
       this.present()
       loop()
       this.draw()
       vsync ? window.requestAnimationFrame(pipelineLoop) : setTimeout(pipelineLoop, 0)
     }
     pipelineLoop()
+  }
+
+  updateFrameRate(time: number) {
+    const now = new Date().getTime()
+    this.frameRate = 1000 / (now - time)
+    console.log(`Framerate: ${this.frameRate.toFixed(1)} fps`)
+    return now
   }
 
   clear() {
@@ -99,20 +110,20 @@ export default class Pipeline {
       vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
 
       if (this.light) {
-        const [cx, cy, cz] = this.view.column(3)
-        const cameraPos = Vector3.withXYZ(cx, cy, cz).negate()
+        const vc = this.view.column(3)
+        const cameraPos = new Vector3(-vc.x, -vc.y, -vc.z)
         const lightPos = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
 
         vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
         const vertexToLight = lightPos.subtract(vert.pos).normalize()
         const vertexToCamera = cameraPos.subtract(vert.pos).normalize()
 
-        const intensity = Math.max(0, Vector3.dot(vertexToLight, vert.nrm))
+        const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
         vert.diff.multiply(this.light.diff.clone().scale(intensity).add(this.light.ambt))
         vert.diff.clamp(1.0)
 
         const betweenLightAndCamera = Vector3.add(vertexToLight, vertexToCamera).normalize()
-        const specularIntensity = Math.max(0, Vector3.dot(betweenLightAndCamera, vert.nrm))
+        const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
         const weirdMakeHighlightLookGoodNonsense =
           specularIntensity /
           (this.shininess - this.shininess * specularIntensity + specularIntensity)

@@ -10,11 +10,8 @@ export default defineComponent({
   },
   mounted() {
     const pipeline = new Pipeline(this.canvasId)
-    const axis = Vector3.withXYZ(1, 4.2, 10)
-    const camera = Matrix.rotationWithLookDirection(
-      Vector3.withXYZ(0, 1, 0),
-      Vector3.withXYZ(0, 0, 1)
-    )
+    const axis = new Vector3(1, 4.2, 10)
+    const camera = Matrix.rotationWithLookDirection(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
     const world = Matrix.translationWithXYZ(0, 0, 4) // Move the world away from the origin 4 units
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,
@@ -25,10 +22,10 @@ export default defineComponent({
 
     pipeline.loadTexture('marble.png')
     pipeline.light = Light.withPositionAndColors(
-      Vector3.withXYZ(1, 3, 0),
-      Color.withRGB(0.1, 0.1, 0.05),
-      Color.withRGB(1, 0.9, 0.8),
-      Color.withRGB(0.8, 0.6, 0.3)
+      new Vector3(1, 3, 0),
+      new Color(0.1, 0.1, 0.05),
+      new Color(1, 0.9, 0.8),
+      new Color(0.8, 0.6, 0.3)
     )
     pipeline.shininess = 30
     pipeline.stream = Cube.generate()
@@ -37,7 +34,7 @@ export default defineComponent({
     pipeline.projection = projection
 
     pipeline.beginLoop(() => {
-      angle = (angle + 0.5) % (Math.PI * 2)
+      angle = (angle + 0.05) % (Math.PI * 2)
       pipeline.world = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
     })
   }

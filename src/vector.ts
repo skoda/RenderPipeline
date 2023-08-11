@@ -3,9 +3,9 @@
 import clamp from './clamp'
 
 // of vector-like types.
-export default abstract class Vector extends Array<number> {
+export default abstract class Vector extends Float64Array {
   constructor(values: number[]) {
-    super(...values)
+    super(values)
     Object.seal(this)
   }
 
