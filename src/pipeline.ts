@@ -1,13 +1,11 @@
-import Light from './light'
-import Matrix from './matrix'
+import { Light } from './light'
 import Rasterizer from './rasterizer'
 import Target from './target'
 import Texture from './texture'
-import Vector3 from './vector3'
-import Vector4 from './vector4'
-import Vertex from './vertex'
+import { Matrix, Vector3, Vector4 } from './math'
+import { Vertex } from './vertex'
 
-export default class Pipeline {
+export class Pipeline {
   world: Matrix
   view: Matrix
   worldView: Matrix

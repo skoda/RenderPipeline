@@ -1,4 +1,4 @@
-import Vector3 from '../src/vector3'
+import { Vector3 } from '../src/math'
 
 test('Vector3 constructors', () => {
   const vec3 = new Vector3(4, 2, 0)

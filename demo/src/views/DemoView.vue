@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
-import Pipeline, { Color, Cube, Vector3, Matrix, Light } from 'render-pipeline'
+import { Pipeline, Matrix, Vector3, Light, Color, Cube } from 'render-pipeline'
 
 export default defineComponent({
   data() {

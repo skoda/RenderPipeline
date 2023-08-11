@@ -1,7 +1,7 @@
-import Color from './color'
-import Vector3 from './vector3'
+import { Color } from './color'
+import { Vector3 } from './math'
 
-export default class Light {
+export class Light {
   pos: Vector3
   ambt: Color
   diff: Color

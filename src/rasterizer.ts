@@ -1,8 +1,7 @@
-import Color from './color'
+import { Color } from './color'
 import Texture, { TextureCoord } from './texture'
-import Vector2 from './vector2'
-import Vector3 from './vector3'
-import Vertex from './vertex'
+import { Vector2, Vector3 } from './math'
+import { Vertex } from './vertex'
 
 export default class Rasterizer {
   buffer: Uint8ClampedArray

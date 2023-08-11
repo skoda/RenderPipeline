@@ -1,5 +1,4 @@
-import Matrix from '../src/matrix'
-import Vector4 from '../src/vector4'
+import { Matrix, Vector4 } from '../src/math'
 
 test('Matrix multiplication', () => {
   const m1 = new Matrix(

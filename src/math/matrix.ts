@@ -1,10 +1,10 @@
-import Vector3 from './vector3'
-import Vector4 from './vector4'
+import { Vector3 } from './vector3'
+import { Vector4 } from './vector4'
 
 type MatrixColumnIndex = 0 | 1 | 2 | 3
 
 // 4x4 Transformation Matrix
-export default class Matrix {
+export class Matrix {
   r0: Vector4
   r1: Vector4
   r2: Vector4

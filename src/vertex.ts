@@ -1,8 +1,8 @@
-import Color from './color'
+import { Color } from './color'
 import { TextureCoord } from './texture'
-import Vector3 from './vector3'
+import { Vector3 } from './math'
 
-export default class Vertex {
+export class Vertex {
   pos: Vector3
   nrm: Vector3
   diff: Color

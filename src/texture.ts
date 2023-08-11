@@ -1,5 +1,5 @@
-import clamp from './clamp'
-import Color from './color'
+import { clamp } from './math'
+import { Color } from './color'
 
 export class TextureCoord {
   u: number

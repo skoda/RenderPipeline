@@ -1,9 +1,10 @@
-import Color from './color'
-import { TextureCoord } from './texture'
-import Vector3 from './vector3'
-import Vertex from './vertex'
+import { Color } from '../color'
+import { TextureCoord } from '../texture'
+import { Vector3 } from '../math'
+import { Vertex } from '../vertex'
+import { Stream } from './stream'
 
-export default class Cube {
+export class Cube {
   static generate(size = 1, diffuse = Color.withWhite(), specular = Color.withWhite()) {
     // Vertex orientation:
     //    4 -------------7
@@ -45,5 +46,9 @@ export default class Cube {
     constructFace(v4, v0, v3, v7, new Vector3(0, 1, 0)) // +y
     constructFace(v1, v5, v6, v2, new Vector3(0, -1, 0)) // -y
     return verts
+  }
+
+  static generateStream(): Stream {
+    return new Stream()
   }
 }

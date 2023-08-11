@@ -1,6 +1,6 @@
-import clamp from './clamp'
+import { clamp } from './math'
 
-export default class Color {
+export class Color {
   r: number
   g: number
   b: number

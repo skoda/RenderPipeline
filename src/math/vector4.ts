@@ -1,7 +1,7 @@
-import clamp from './clamp'
-import Vector3 from './vector3'
+import { clamp } from './clamp'
+import { Vector3 } from './vector3'
 
-export default class Vector4 {
+export class Vector4 {
   x: number
   y: number
   z: number
