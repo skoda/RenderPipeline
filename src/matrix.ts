@@ -113,13 +113,13 @@ export default class Matrix {
   column(col: MatrixColumnIndex) {
     switch (col) {
       case 0:
-        return new Vector4(this.r0.x, this.r0.y, this.r0.z, this.r0.w)
+        return new Vector4(this.r0.x, this.r1.x, this.r2.x, this.r3.x)
       case 1:
-        return new Vector4(this.r1.x, this.r1.y, this.r1.z, this.r1.w)
+        return new Vector4(this.r0.y, this.r1.y, this.r2.y, this.r3.y)
       case 2:
-        return new Vector4(this.r2.x, this.r2.y, this.r2.z, this.r2.w)
+        return new Vector4(this.r0.z, this.r1.z, this.r2.z, this.r3.z)
       default:
-        return new Vector4(this.r3.x, this.r3.y, this.r3.z, this.r3.w)
+        return new Vector4(this.r0.w, this.r1.w, this.r2.w, this.r3.w)
     }
   }
 

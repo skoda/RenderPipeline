@@ -16,8 +16,10 @@ export default class Pipeline {
   stream: Vertex[]
   light?: Light
   texture?: Texture
-  shininess: number
-  frameRate: number
+  shininess = 0
+
+  frameRate = 0
+  framerateReadoutId = ''
 
   width: number
   height: number
@@ -46,9 +48,9 @@ export default class Pipeline {
   }
 
   beginLoop(loop: () => void, vsync = true) {
-    let frameTimestamp = new Date().getTime()
+    const frameData = { count: 0, time: new Date().getTime() }
     const pipelineLoop = () => {
-      frameTimestamp = this.updateFrameRate(frameTimestamp)
+      this.updateFrameRate(frameData)
       this.present()
       loop()
       this.draw()
@@ -57,11 +59,16 @@ export default class Pipeline {
     pipelineLoop()
   }
 
-  updateFrameRate(time: number) {
+  updateFrameRate(frameData: { count: number; time: number }) {
+    if (!this.framerateReadoutId) return
     const now = new Date().getTime()
-    this.frameRate = 1000 / (now - time)
-    console.log(`Framerate: ${this.frameRate.toFixed(1)} fps`)
-    return now
+    if (++frameData.count >= 10) {
+      this.frameRate = 10000 / Math.max(1, now - frameData.time)
+      const el = document.getElementById(this.framerateReadoutId)
+      el && (el.innerHTML = `${this.frameRate.toFixed(1)} fps`)
+      frameData.time = now
+      frameData.count = 0
+    }
   }
 
   clear() {

@@ -162,7 +162,7 @@ export default class Rasterizer {
     mBot.pos = Vector3.subtract(bot.pos, top.pos).scale(invHeight)
 
     if (this.texture) {
-      const txSize = TextureCoord.withUV(this.texture.width, this.texture.height)
+      const txSize = new TextureCoord(this.texture.width, this.texture.height)
       top.tex.scale(top.pos.z).multiply(txSize)
       mid.tex.scale(mid.pos.z).multiply(txSize)
       bot.tex.scale(bot.pos.z).multiply(txSize)

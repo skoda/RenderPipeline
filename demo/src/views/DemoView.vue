@@ -29,6 +29,7 @@ export default defineComponent({
     )
     pipeline.shininess = 30
     pipeline.stream = Cube.generate()
+    pipeline.framerateReadoutId = 'framerateView'
 
     pipeline.view = camera
     pipeline.projection = projection
@@ -36,7 +37,7 @@ export default defineComponent({
     pipeline.beginLoop(() => {
       angle = (angle + 0.05) % (Math.PI * 2)
       pipeline.world = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
-    })
+    }, false)
   }
 })
 </script>
@@ -45,9 +46,10 @@ export default defineComponent({
   <div class="demo">
     <h2>Demo</h2>
     <br />
-    <canvas :id="canvasId" width="640" height="360">
-      Your browser does not support HTML5 Canvas.
-    </canvas>
+    <div>
+      <canvas :id="canvasId" width="640" height="360"></canvas>
+      <div id="framerateView"></div>
+    </div>
   </div>
 </template>
 
@@ -59,6 +61,9 @@ export default defineComponent({
     flex-direction: column;
     align-items: center;
     justify-content: center;
+  }
+  #framerateView {
+    text-align: right;
   }
 }
 </style>

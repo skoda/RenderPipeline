@@ -24,10 +24,10 @@ export default class Cube {
     const v5 = new Vector3(-d, -d, d)
     const v6 = new Vector3(d, -d, d)
     const v7 = new Vector3(d, d, d)
-    const txTl = TextureCoord.withUV(0, 0)
-    const txBl = TextureCoord.withUV(0, 1)
-    const txBr = TextureCoord.withUV(1, 1)
-    const txTr = TextureCoord.withUV(1, 0)
+    const txTl = new TextureCoord(0, 0)
+    const txBl = new TextureCoord(0, 1)
+    const txBr = new TextureCoord(1, 1)
+    const txTr = new TextureCoord(1, 0)
 
     const constructFace = (tl: Vector3, bl: Vector3, br: Vector3, tr: Vector3, normal: Vector3) => {
       verts.push(new Vertex(tl, normal, diffuse, specular, txTl))

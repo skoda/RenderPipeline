@@ -1,32 +1,59 @@
 import clamp from './clamp'
 import Color from './color'
-import Vector from './vector'
 
-export class TextureCoord extends Vector {
-  get u() {
-    return this[0]
-  }
-  set u(u: number) {
-    this[0] = u
-  }
+export class TextureCoord {
+  u: number
+  v: number
 
-  get v() {
-    return this[1]
-  }
-  set v(v: number) {
-    this[1] = v
-  }
-
-  private constructor(values: number[]) {
-    super(values)
+  constructor(u: number, v: number) {
+    this.u = u
+    this.v = v
   }
 
   clone() {
-    return new TextureCoord([...this])
+    return new TextureCoord(this.u, this.v)
   }
 
-  static withUV(u: number, v: number) {
-    return new TextureCoord([u, v])
+  static add(l: TextureCoord, r: TextureCoord) {
+    return l.clone().add(r)
+  }
+
+  static subtract(l: TextureCoord, r: TextureCoord) {
+    return l.clone().subtract(r)
+  }
+
+  static multiply(l: TextureCoord, r: TextureCoord) {
+    return l.clone().multiply(r)
+  }
+
+  scale(s: number) {
+    this.u *= s
+    this.v *= s
+    return this
+  }
+
+  negate() {
+    this.u = -this.u
+    this.v = -this.v
+    return this
+  }
+
+  add(coord: TextureCoord) {
+    this.u += coord.u
+    this.v += coord.v
+    return this
+  }
+
+  subtract(coord: TextureCoord) {
+    this.u -= coord.u
+    this.v -= coord.v
+    return this
+  }
+
+  multiply(coord: TextureCoord) {
+    this.u *= coord.u
+    this.v *= coord.v
+    return this
   }
 }
 
