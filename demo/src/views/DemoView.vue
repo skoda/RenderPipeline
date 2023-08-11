@@ -34,10 +34,13 @@ export default defineComponent({
     pipeline.view = camera
     pipeline.projection = projection
 
+    let frameTime = new Date().getTime()
     pipeline.beginLoop(() => {
-      angle = (angle + 0.05) % (Math.PI * 2)
+      const now = new Date().getTime()
+      angle = (angle + 0.003125 * (now - frameTime)) % (Math.PI * 2)
       pipeline.world = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
-    }, false)
+      frameTime = now
+    }, true)
   }
 })
 </script>
@@ -54,6 +57,12 @@ export default defineComponent({
 </template>
 
 <style>
+#framerateView {
+  text-align: right;
+}
+canvas {
+  max-width: 100%;
+}
 @media (min-width: 1024px) {
   .demo {
     min-height: 100vh;
@@ -61,9 +70,6 @@ export default defineComponent({
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
-  #framerateView {
-    text-align: right;
   }
 }
 </style>
