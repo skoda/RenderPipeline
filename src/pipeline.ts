@@ -1,19 +1,20 @@
 import { Light } from './light'
 import Rasterizer from './rasterizer'
 import Target from './target'
-import Texture from './texture'
 import { Matrix, Vector3, Vector4 } from './math'
 import { Vertex } from './vertex'
+import { Primitive, Stream, VertexPattern } from './geometry/stream'
 
 export class Pipeline {
-  world: Matrix
   view: Matrix
   worldView: Matrix
   projection: Matrix
   screenTransform: Matrix
-  stream: Vertex[]
+  cameraViewPosition: Vector3
+  lightViewPosition: Vector3
+  vertStream: Vertex[]
+  streams: Stream[]
   light?: Light
-  texture?: Texture
   shininess = 0
 
   frameRate = 0
@@ -28,12 +29,14 @@ export class Pipeline {
   rasterizer: Rasterizer
 
   constructor(renderCanvasId: string) {
-    this.world = Matrix.withIdentity()
     this.view = Matrix.withIdentity()
     this.worldView = Matrix.withIdentity()
     this.projection = Matrix.withIdentity()
     this.screenTransform = Matrix.withIdentity()
-    this.stream = []
+    this.cameraViewPosition = new Vector3(0, 0, 0)
+    this.lightViewPosition = new Vector3(0, 0, 0)
+    this.streams = []
+    this.vertStream = []
     this.shininess = 0
     this.frameRate = 0
 
@@ -43,6 +46,12 @@ export class Pipeline {
     this.renderTarget = Target.withDimensions(this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
     this.rasterizer = new Rasterizer(this.frameBuffer)
+
+    const w = this.width / 2.0
+    const h = this.height / 2.0
+    this.screenTransform = Matrix.translationWithXYZ(w, h, 0).multiplyMatrix(
+      Matrix.scaleWithXYZ(w, -h, -1)
+    )
   }
 
   beginLoop(loop: () => void, vsync = true) {
@@ -52,9 +61,14 @@ export class Pipeline {
       this.present()
       loop()
       this.draw()
+      this.streams = []
       vsync ? window.requestAnimationFrame(pipelineLoop) : setTimeout(pipelineLoop, 0)
     }
     pipelineLoop()
+  }
+
+  addStream(stream: Stream) {
+    this.streams.push(stream.clone())
   }
 
   updateFrameRate(frameData: { count: number; time: number }) {
@@ -82,89 +96,164 @@ export class Pipeline {
     this.clear()
   }
 
-  async loadTexture(url: string) {
-    this.texture = await Texture.withURL(url)
-  }
-
   draw() {
-    const w = this.width / 2.0
-    const h = this.height / 2.0
-
-    this.texture && this.rasterizer.setTexture(this.texture)
-
-    this.worldView = Matrix.multiply(this.view, this.world)
-    this.screenTransform = Matrix.translationWithXYZ(w, h, 0).multiplyMatrix(
-      Matrix.scaleWithXYZ(w, -h, -1)
-    )
-
-    for (let i = 0; i + 3 <= this.stream.length; ) {
-      const triangle = [
-        this.stream[i++].clone(),
-        this.stream[i++].clone(),
-        this.stream[i++].clone()
-      ]
-
-      this.transformAndLight(triangle)
-      this.normalizeAndClip(triangle)
-      this.targetMapAndRasterize(triangle)
+    if (this.light) {
+      const vc = this.view.column(3)
+      this.cameraViewPosition = new Vector3(-vc.x, -vc.y, -vc.z)
+      this.lightViewPosition = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
     }
-  }
 
-  transformAndLight(triangle: Vertex[]) {
-    triangle.forEach((vert) => {
-      vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
+    this.streams.forEach((stream) => {
+      stream.texture && this.rasterizer.setTexture(stream.texture)
+      this.worldView = Matrix.multiply(this.view, stream.worldMatrix)
 
-      if (this.light) {
-        const vc = this.view.column(3)
-        const cameraPos = new Vector3(-vc.x, -vc.y, -vc.z)
-        const lightPos = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
-
-        vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
-        const vertexToLight = lightPos.subtract(vert.pos).normalize()
-        const vertexToCamera = cameraPos.subtract(vert.pos).normalize()
-
-        const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
-        vert.diff.multiply(this.light.diff.clone().scale(intensity).add(this.light.ambt))
-        vert.diff.clamp(1.0)
-
-        const betweenLightAndCamera = Vector3.add(vertexToLight, vertexToCamera).normalize()
-        const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
-        const weirdMakeHighlightLookGoodNonsense =
-          specularIntensity /
-          (this.shininess - this.shininess * specularIntensity + specularIntensity)
-
-        vert.spec.multiply(this.light.spec.clone().scale(weirdMakeHighlightLookGoodNonsense))
-        vert.spec.clamp(1.0)
-      }
+      stream.primitives.forEach((p) => {
+        p.vertices.forEach((v) => {
+          this.transformAndLight2(v)
+        })
+        this.triangulateClipTargetMapAndRasterize(p)
+      })
     })
+
+    // for (let i = 0; i + 3 <= this.vertStream.length; ) {
+    //   const triangle = [
+    //     this.vertStream[i++].clone(),
+    //     this.vertStream[i++].clone(),
+    //     this.vertStream[i++].clone()
+    //   ]
+
+    //   this.transformAndLight(triangle)
+    //   this.normalizeAndClip(triangle)
+    //   this.targetMapAndRasterize(triangle)
+    // }
   }
 
-  normalizeAndClip(triangle: Vertex[]) {
-    // TODO: Clip
-    triangle.forEach((vert) => {
-      vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
-      vert.pos.z = 1.0 / vert.pos.z
-      vert.pos.x *= vert.pos.z
-      vert.pos.y *= vert.pos.z
-    })
+  transformAndLight2(vert: Vertex) {
+    vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
+
+    if (this.light) {
+      vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
+      const vertexToLight = Vector3.subtract(this.lightViewPosition, vert.pos).normalize()
+      const vertexToCamera = Vector3.subtract(this.cameraViewPosition, vert.pos).normalize()
+
+      const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
+      vert.diff.multiply(this.light.diff.clone().scale(intensity).add(this.light.ambt))
+      vert.diff.clamp(1.0)
+
+      const betweenLightAndCamera = vertexToLight.add(vertexToCamera).normalize()
+      const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
+      const weirdMakeHighlightLookGoodNonsense =
+        specularIntensity /
+        (this.shininess - this.shininess * specularIntensity + specularIntensity)
+
+      vert.spec.multiply(this.light.spec.clone().scale(weirdMakeHighlightLookGoodNonsense))
+      vert.spec.clamp(1.0)
+    }
+
+    vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
+    vert.pos.z = 1.0 / vert.pos.z
+    vert.pos.x *= vert.pos.z
+    vert.pos.y *= vert.pos.z
   }
 
-  targetMapAndRasterize(triangle: Vertex[]) {
+  // transformAndLight(triangle: Vertex[]) {
+  //   triangle.forEach((vert) => {
+  //     vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
+
+  //     if (this.light) {
+  //       const vc = this.view.column(3)
+  //       const cameraPos = new Vector3(-vc.x, -vc.y, -vc.z)
+  //       const lightPos = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
+
+  //       vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
+  //       const vertexToLight = lightPos.subtract(vert.pos).normalize()
+  //       const vertexToCamera = cameraPos.subtract(vert.pos).normalize()
+
+  //       const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
+  //       vert.diff.multiply(this.light.diff.clone().scale(intensity).add(this.light.ambt))
+  //       vert.diff.clamp(1.0)
+
+  //       const betweenLightAndCamera = Vector3.add(vertexToLight, vertexToCamera).normalize()
+  //       const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
+  //       const weirdMakeHighlightLookGoodNonsense =
+  //         specularIntensity /
+  //         (this.shininess - this.shininess * specularIntensity + specularIntensity)
+
+  //       vert.spec.multiply(this.light.spec.clone().scale(weirdMakeHighlightLookGoodNonsense))
+  //       vert.spec.clamp(1.0)
+  //     }
+  //   })
+  // }
+
+  triangulateClipTargetMapAndRasterize(primitive: Primitive) {
+    const { pattern, vertices: v } = primitive
+    const triangles: Vertex[][] = []
     const counterClockwise = (triangle: Vertex[]) => {
       const pos = triangle.map((vert) => vert.pos)
       return (
         (pos[1].x - pos[0].x) * (pos[2].y - pos[1].y) +
-          (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) <
+          (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) >
         0
       )
     }
 
-    triangle.forEach((vert) => {
-      vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
-    })
-
-    if (counterClockwise(triangle)) {
-      this.rasterizer.triangleDraw(triangle)
+    switch (pattern) {
+      case VertexPattern.Fan:
+        for (let i = 2; i < v.length; ++i) {
+          triangles.push([v[0].clone(), v[i - 1].clone(), v[i].clone()])
+        }
+        break
+      case VertexPattern.Strip:
+        for (let i = 2; i < v.length; ++i) {
+          const [a, b, c] = i % 2 ? [i - 2, i, i - 1] : [i - 2, i - 1, i]
+          triangles.push([v[a].clone(), v[b].clone(), v[c].clone()])
+        }
+        break
+      default: // VertexPattern.List
+        for (let i = 0; i < v.length; i += 3) {
+          triangles.push([v[i], v[i + 1], v[i + 2]])
+        }
     }
+
+    triangles.forEach((tri) => {
+      if (!counterClockwise(tri)) return
+
+      // Clip triangle here in unit square (possibly generates more triangles)
+
+      tri.forEach((vert) => {
+        vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
+      })
+
+      this.rasterizer.triangleDraw(tri)
+    })
   }
+
+  // normalizeAndClip(triangle: Vertex[]) {
+  //   // TODO: Clip
+  //   triangle.forEach((vert) => {
+  //     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
+  //     vert.pos.z = 1.0 / vert.pos.z
+  //     vert.pos.x *= vert.pos.z
+  //     vert.pos.y *= vert.pos.z
+  //   })
+  // }
+
+  // targetMapAndRasterize(triangle: Vertex[]) {
+  //   const counterClockwise = (triangle: Vertex[]) => {
+  //     const pos = triangle.map((vert) => vert.pos)
+  //     return (
+  //       (pos[1].x - pos[0].x) * (pos[2].y - pos[1].y) +
+  //         (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) <
+  //       0
+  //     )
+  //   }
+
+  //   triangle.forEach((vert) => {
+  //     vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
+  //   })
+
+  //   if (counterClockwise(triangle)) {
+  //     this.rasterizer.triangleDraw(triangle)
+  //   }
+  // }
 }

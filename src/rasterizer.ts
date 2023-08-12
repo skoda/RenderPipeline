@@ -25,7 +25,7 @@ export default class Rasterizer {
     this.height = height
   }
 
-  setTexture(texture: Texture) {
+  setTexture(texture?: Texture) {
     this.texture = texture
   }
 

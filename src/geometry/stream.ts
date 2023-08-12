@@ -2,13 +2,13 @@ import { Matrix } from '../math'
 import Texture from '../texture'
 import { Vertex } from '../vertex'
 
-enum VertexPattern {
+export enum VertexPattern {
   List,
   Fan,
   Strip
 }
 
-export class Triangles {
+export class Primitive {
   pattern: VertexPattern
   vertices: Vertex[]
 
@@ -18,16 +18,28 @@ export class Triangles {
   }
 
   clone() {
-    return new Triangles(this.pattern, this.vertices, true)
+    return new Primitive(this.pattern, this.vertices, true)
   }
 }
 
 export class Stream {
-  trianglesList: Triangles[] = []
+  primitives: Primitive[] = []
   worldMatrix: Matrix = Matrix.withIdentity()
   texture?: Texture
 
-  addTriangles(triangles: Triangles, clone = true) {
-    this.trianglesList.push(clone ? triangles.clone() : triangles)
+  addPrimitives(primitives: Primitive, clone = true) {
+    this.primitives.push(clone ? primitives.clone() : primitives)
+  }
+
+  async loadTexture(url: string) {
+    this.texture = await Texture.withURL(url)
+  }
+
+  clone() {
+    const clone = new Stream()
+    clone.texture = this.texture
+    clone.worldMatrix = this.worldMatrix.clone()
+    clone.primitives = this.primitives.map((p) => p.clone())
+    return clone
   }
 }

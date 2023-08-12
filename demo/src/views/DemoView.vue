@@ -10,6 +10,7 @@ export default defineComponent({
   },
   mounted() {
     const pipeline = new Pipeline(this.canvasId)
+    const cube = Cube.generateStream()
     const axis = new Vector3(1, 4.2, 10)
     const camera = Matrix.rotationWithLookDirection(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
     const world = Matrix.translationWithXYZ(0, 0, 4) // Move the world away from the origin 4 units
@@ -20,7 +21,7 @@ export default defineComponent({
     )
     let angle = Math.PI / 2
 
-    pipeline.loadTexture('marble.png')
+    cube.loadTexture('marble.png')
     pipeline.light = Light.withPositionAndColors(
       new Vector3(1, 3, 0),
       new Color(0.1, 0.1, 0.05),
@@ -28,7 +29,7 @@ export default defineComponent({
       new Color(0.8, 0.6, 0.3)
     )
     pipeline.shininess = 30
-    pipeline.stream = Cube.generate()
+    pipeline.vertStream = Cube.generate()
     pipeline.framerateReadoutId = 'framerateView'
 
     pipeline.view = camera
@@ -38,7 +39,8 @@ export default defineComponent({
     pipeline.beginLoop(() => {
       const now = new Date().getTime()
       angle = (angle + 0.003125 * (now - frameTime)) % (Math.PI * 2)
-      pipeline.world = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
+      cube.worldMatrix = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
+      pipeline.addStream(cube)
       frameTime = now
     }, true)
   }
