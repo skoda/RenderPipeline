@@ -86,8 +86,9 @@ export class Matrix {
   }
 
   static rotationWithLookDirection(look: Vector3, up: Vector3) {
-    const i = Vector3.cross(look, up)
-    return Matrix.rotationWithBasisVectors(i, look, Vector3.cross(i, look))
+    // Remember, we're in a left-handed coordinate system
+    const i = Vector3.cross(up, look)
+    return Matrix.rotationWithBasisVectors(i, Vector3.cross(look, i), look)
   }
 
   static projectionWithViewportAndFieldOfView(

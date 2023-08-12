@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Pipeline, Matrix, Vector3, Light, Color, Cube } from 'render-pipeline'
+import { Pipeline, Matrix, Vector3, Light, Circle, Color, Cube } from 'render-pipeline'
 
 export default defineComponent({
   data() {
@@ -10,9 +10,10 @@ export default defineComponent({
   },
   mounted() {
     const pipeline = new Pipeline(this.canvasId)
-    const cube = Cube.generate()
+    // const cube = Cube.generate()
+    const cube = Circle.generate(24)
     const axis = new Vector3(1, 4.2, 10)
-    const camera = Matrix.rotationWithLookDirection(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
+    const camera = Matrix.rotationWithLookDirection(new Vector3(0, 0, 1), new Vector3(0, 1, 0))
     const world = Matrix.translationWithXYZ(0, 0, 4) // Move the world away from the origin 4 units
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,

@@ -107,14 +107,14 @@ export class Pipeline {
 
       stream.primitives.forEach((p) => {
         p.vertices.forEach((v) => {
-          this.transformAndLight2(v)
+          this.transformAndLight(v)
         })
         this.triangulateClipTargetMapAndRasterize(p)
       })
     })
   }
 
-  transformAndLight2(vert: Vertex) {
+  transformAndLight(vert: Vertex) {
     vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
 
     if (this.light) {
@@ -174,7 +174,6 @@ export class Pipeline {
 
     triangles.forEach((tri) => {
       if (!counterClockwise(tri)) return
-
       // Clip triangle here in unit square (possibly generates more triangles)
 
       tri.forEach((vert) => {
