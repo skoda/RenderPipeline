@@ -12,7 +12,6 @@ export class Pipeline {
   screenTransform: Matrix
   cameraViewPosition: Vector3
   lightViewPosition: Vector3
-  vertStream: Vertex[]
   streams: Stream[]
   light?: Light
   shininess = 0
@@ -36,7 +35,6 @@ export class Pipeline {
     this.cameraViewPosition = new Vector3(0, 0, 0)
     this.lightViewPosition = new Vector3(0, 0, 0)
     this.streams = []
-    this.vertStream = []
     this.shininess = 0
     this.frameRate = 0
 
@@ -114,18 +112,6 @@ export class Pipeline {
         this.triangulateClipTargetMapAndRasterize(p)
       })
     })
-
-    // for (let i = 0; i + 3 <= this.vertStream.length; ) {
-    //   const triangle = [
-    //     this.vertStream[i++].clone(),
-    //     this.vertStream[i++].clone(),
-    //     this.vertStream[i++].clone()
-    //   ]
-
-    //   this.transformAndLight(triangle)
-    //   this.normalizeAndClip(triangle)
-    //   this.targetMapAndRasterize(triangle)
-    // }
   }
 
   transformAndLight2(vert: Vertex) {
@@ -155,35 +141,6 @@ export class Pipeline {
     vert.pos.x *= vert.pos.z
     vert.pos.y *= vert.pos.z
   }
-
-  // transformAndLight(triangle: Vertex[]) {
-  //   triangle.forEach((vert) => {
-  //     vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
-
-  //     if (this.light) {
-  //       const vc = this.view.column(3)
-  //       const cameraPos = new Vector3(-vc.x, -vc.y, -vc.z)
-  //       const lightPos = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
-
-  //       vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
-  //       const vertexToLight = lightPos.subtract(vert.pos).normalize()
-  //       const vertexToCamera = cameraPos.subtract(vert.pos).normalize()
-
-  //       const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
-  //       vert.diff.multiply(this.light.diff.clone().scale(intensity).add(this.light.ambt))
-  //       vert.diff.clamp(1.0)
-
-  //       const betweenLightAndCamera = Vector3.add(vertexToLight, vertexToCamera).normalize()
-  //       const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
-  //       const weirdMakeHighlightLookGoodNonsense =
-  //         specularIntensity /
-  //         (this.shininess - this.shininess * specularIntensity + specularIntensity)
-
-  //       vert.spec.multiply(this.light.spec.clone().scale(weirdMakeHighlightLookGoodNonsense))
-  //       vert.spec.clamp(1.0)
-  //     }
-  //   })
-  // }
 
   triangulateClipTargetMapAndRasterize(primitive: Primitive) {
     const { pattern, vertices: v } = primitive
@@ -227,33 +184,4 @@ export class Pipeline {
       this.rasterizer.triangleDraw(tri)
     })
   }
-
-  // normalizeAndClip(triangle: Vertex[]) {
-  //   // TODO: Clip
-  //   triangle.forEach((vert) => {
-  //     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
-  //     vert.pos.z = 1.0 / vert.pos.z
-  //     vert.pos.x *= vert.pos.z
-  //     vert.pos.y *= vert.pos.z
-  //   })
-  // }
-
-  // targetMapAndRasterize(triangle: Vertex[]) {
-  //   const counterClockwise = (triangle: Vertex[]) => {
-  //     const pos = triangle.map((vert) => vert.pos)
-  //     return (
-  //       (pos[1].x - pos[0].x) * (pos[2].y - pos[1].y) +
-  //         (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) <
-  //       0
-  //     )
-  //   }
-
-  //   triangle.forEach((vert) => {
-  //     vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
-  //   })
-
-  //   if (counterClockwise(triangle)) {
-  //     this.rasterizer.triangleDraw(triangle)
-  //   }
-  // }
 }

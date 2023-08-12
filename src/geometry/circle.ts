@@ -4,7 +4,7 @@ import { Vector3 } from '../math'
 import { Vertex } from '../vertex'
 import { Stream, Primitive, VertexPattern } from './stream'
 
-export class Cube {
+export class Circle {
   static generate(size = 1, diffuse = Color.withWhite(), specular = Color.withWhite()): Stream {
     // Vertex orientation:
     //    4 -------------7

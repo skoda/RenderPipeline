@@ -10,7 +10,7 @@ export default defineComponent({
   },
   mounted() {
     const pipeline = new Pipeline(this.canvasId)
-    const cube = Cube.generateStream()
+    const cube = Cube.generate()
     const axis = new Vector3(1, 4.2, 10)
     const camera = Matrix.rotationWithLookDirection(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
     const world = Matrix.translationWithXYZ(0, 0, 4) // Move the world away from the origin 4 units
@@ -29,7 +29,6 @@ export default defineComponent({
       new Color(0.8, 0.6, 0.3)
     )
     pipeline.shininess = 30
-    pipeline.vertStream = Cube.generate()
     pipeline.framerateReadoutId = 'framerateView'
 
     pipeline.view = camera
