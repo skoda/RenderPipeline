@@ -2,17 +2,20 @@ import { Color } from './color'
 import Texture, { TextureCoord } from './texture'
 import { Vector2, Vector3 } from './math'
 import { Vertex } from './vertex'
+import { DepthBuffer } from './depthBuffer'
 
 export default class Rasterizer {
   buffer: Uint8ClampedArray
+  depthBuffer: DepthBuffer
   width: number
   height: number
   texture?: Texture
   curIdx: number
 
-  constructor(frameBuffer: ImageData) {
+  constructor(frameBuffer: ImageData, depthBuffer: DepthBuffer) {
     const { data: buffer, width, height } = frameBuffer
     this.buffer = buffer
+    this.depthBuffer = depthBuffer
     this.width = width
     this.height = height
     this.curIdx = 0
@@ -93,22 +96,30 @@ export default class Rasterizer {
 
     //Initialize index for nextPixel
     this.setBufferIndex(x, y)
+    this.depthBuffer.setIndex(x, y)
 
     //Color objects to minimize object allocations in inner loop
     const color = Color.withBlack()
 
     //Draw Scanline
     while (x++ <= xEnd) {
+      const depth = 1 / z
+      const pass = this.depthBuffer.next(depth)
+
       if (this.texture) {
-        this.texture.sample(t.clone().scale(1 / z), color)
+        pass && this.texture.sample(t.clone().scale(depth), color)
         t.add(mt)
         z += mz
       } else {
         color.r = color.g = color.b = 1.0
       }
 
-      color.multiply(diff).add(spec)
-      this.nextPixel(Math.floor(color.r), Math.floor(color.g), Math.floor(color.b))
+      if (pass) {
+        color.multiply(diff).add(spec)
+        this.nextPixel(Math.floor(color.r), Math.floor(color.g), Math.floor(color.b))
+      } else {
+        this.curIdx += 4
+      }
 
       diff.add(mdiff)
       spec.add(mspec)

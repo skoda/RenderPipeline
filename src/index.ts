@@ -1,4 +1,6 @@
+export * from './camera'
 export * from './color'
+export * from './depthBuffer'
 export * from './geometry'
 export * from './light'
 export * from './math'

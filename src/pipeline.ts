@@ -4,6 +4,7 @@ import Target from './target'
 import { Matrix, Vector3, Vector4 } from './math'
 import { Vertex } from './vertex'
 import { Primitive, Stream, VertexPattern } from './geometry/stream'
+import { DepthBuffer } from './depthBuffer'
 
 export class Pipeline {
   view: Matrix
@@ -25,6 +26,9 @@ export class Pipeline {
   screenTarget: Target
   renderTarget: Target
   frameBuffer: ImageData
+  depthBuffer: DepthBuffer
+  maxDepth = 500
+  minDepth = 1
   rasterizer: Rasterizer
 
   constructor(renderCanvasId: string) {
@@ -43,12 +47,13 @@ export class Pipeline {
     this.height = this.screenTarget.canvas.height
     this.renderTarget = Target.withDimensions(this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
-    this.rasterizer = new Rasterizer(this.frameBuffer)
+    this.depthBuffer = new DepthBuffer(this.width, this.height)
+    this.rasterizer = new Rasterizer(this.frameBuffer, this.depthBuffer)
 
     const w = this.width / 2.0
     const h = this.height / 2.0
-    this.screenTransform = Matrix.translationWithXYZ(w, h, 0).multiplyMatrix(
-      Matrix.scaleWithXYZ(w, -h, -1)
+    this.screenTransform = Matrix.translationWithXYZ(w, h, -this.minDepth).multiplyMatrix(
+      Matrix.scaleWithXYZ(w, -h, this.maxDepth - this.minDepth)
     )
   }
 
@@ -69,6 +74,11 @@ export class Pipeline {
     this.streams.push(stream.clone())
   }
 
+  setDepthPlanes({ far, near }: { far?: number; near?: number }) {
+    far && (this.maxDepth = far)
+    near && (this.minDepth = near)
+  }
+
   updateFrameRate(frameData: { count: number; time: number }) {
     if (!this.framerateReadoutId) return
     const now = new Date().getTime()
@@ -85,6 +95,7 @@ export class Pipeline {
     this.renderTarget.context.fillStyle = 'rgb(0, 0, 0)'
     this.renderTarget.context.fillRect(0, 0, this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
+    this.depthBuffer.clear()
     this.rasterizer.setFrameBuffer(this.frameBuffer)
   }
 
@@ -102,7 +113,7 @@ export class Pipeline {
     }
 
     this.streams.forEach((stream) => {
-      stream.texture && this.rasterizer.setTexture(stream.texture)
+      this.rasterizer.setTexture(stream.texture)
       this.worldView = Matrix.multiply(this.view, stream.worldMatrix)
 
       stream.primitives.forEach((p) => {

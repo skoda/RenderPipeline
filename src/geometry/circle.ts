@@ -26,7 +26,8 @@ export class Circle {
           nrm,
           diffuse,
           specular,
-          new TextureCoord(0.5 * (1 + cos), 0.5 * (1 + sin))
+          // new TextureCoord(0.5 * (1 + cos), 0.5 * (1 + sin))
+          new TextureCoord(2 * cos, 2 * sin)
         )
       )
     }

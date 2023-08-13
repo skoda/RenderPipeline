@@ -1,6 +1,12 @@
 import { clamp } from './math'
 import { Color } from './color'
 
+export enum TextureAddressingMode {
+  Clamp,
+  Wrap,
+  Mirror
+}
+
 export class TextureCoord {
   u: number
   v: number
@@ -96,9 +102,22 @@ export default class Texture {
     this.height = height
   }
 
-  sample(coord: TextureCoord, out: Color) {
-    const u = clamp(Math.round(coord.u), this.width - 1)
-    const v = clamp(Math.round(coord.v), this.height - 1)
+  static addressingMethod = {
+    [TextureAddressingMode.Clamp]: (c: number, d: number) => clamp(Math.floor(c), d - 1),
+    [TextureAddressingMode.Wrap]: (c: number, d: number) => {
+      c = Math.floor(c) % d
+      return c < 0 ? c + d : c
+    },
+    [TextureAddressingMode.Mirror]: (c: number, d: number) => {
+      c = Math.abs(Math.floor(c)) % (d + d)
+      return c < d ? c : d + d - c - 1
+    }
+  }
+
+  sample(coord: TextureCoord, out: Color, mode = TextureAddressingMode.Wrap) {
+    const method = Texture.addressingMethod[mode]
+    const u = method(coord.u, this.width)
+    const v = method(coord.v, this.height)
 
     let i = (v * this.width + u) * 4
 

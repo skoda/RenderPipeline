@@ -1,6 +1,17 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Pipeline, Matrix, Vector3, Light, Circle, Color, Cube } from 'render-pipeline'
+import { Pipeline, Matrix, Vector3, Light, Camera, Circle, Color, Cube } from 'render-pipeline'
+
+enum KeyMap {
+  W = 'KeyW',
+  A = 'KeyA',
+  S = 'KeyS',
+  D = 'KeyD',
+  Left = 'ArrowLeft',
+  Up = 'ArrowUp',
+  Right = 'ArrowRight',
+  Down = 'ArrowDown'
+}
 
 export default defineComponent({
   data() {
@@ -9,12 +20,12 @@ export default defineComponent({
     }
   },
   mounted() {
+    const keysDown = new Set()
     const pipeline = new Pipeline(this.canvasId)
-    // const cube = Cube.generate()
-    const cube = Circle.generate(24)
+    const camera = new Camera(new Vector3(0,0,1), new Vector3(0,1,0), new Vector3(0,2,-12))
+    const cube = Cube.generate()
+    const floor = Circle.generate(24, 15)
     const axis = new Vector3(1, 4.2, 10)
-    const camera = Matrix.rotationWithLookDirection(new Vector3(0, 0, 1), new Vector3(0, 1, 0))
-    const world = Matrix.translationWithXYZ(0, 0, 4) // Move the world away from the origin 4 units
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,
       pipeline.height,
@@ -22,9 +33,15 @@ export default defineComponent({
     )
     let angle = Math.PI / 2
 
+    window.addEventListener('keydown', (e) => {
+      keysDown.add((e as KeyboardEvent).code)
+    })
+    window.addEventListener('keyup', (e) => keysDown.delete((e as KeyboardEvent).code))
+
     cube.loadTexture('marble.png')
+    floor.loadTexture('flooring.png')
     pipeline.light = Light.withPositionAndColors(
-      new Vector3(1, 3, 0),
+      new Vector3(2, 8, -5),
       new Color(0.1, 0.1, 0.05),
       new Color(1, 0.9, 0.8),
       new Color(0.8, 0.6, 0.3)
@@ -32,15 +49,30 @@ export default defineComponent({
     pipeline.shininess = 30
     pipeline.framerateReadoutId = 'framerateView'
 
-    pipeline.view = camera
     pipeline.projection = projection
 
     let frameTime = new Date().getTime()
     pipeline.beginLoop(() => {
       const now = new Date().getTime()
-      angle = (angle + 0.003125 * (now - frameTime)) % (Math.PI * 2)
-      cube.worldMatrix = Matrix.multiply(world, Matrix.rotationAroundAxis(axis, angle))
+      const perSecond = (now - frameTime) * 0.001
+
+
+      if (keysDown.has(KeyMap.W)) camera.moveForward(5 * perSecond)
+      else if (keysDown.has(KeyMap.S)) camera.moveBackward(5 * perSecond)
+      if (keysDown.has(KeyMap.A)) camera.moveLeft(5 * perSecond)
+      else if (keysDown.has(KeyMap.D)) camera.moveRight(5 * perSecond)
+
+      if (keysDown.has(KeyMap.Up)) camera.pitchUp(1 * perSecond)
+      else if (keysDown.has(KeyMap.Down)) camera.pitchDown(1 * perSecond)
+      if (keysDown.has(KeyMap.Left)) camera.turnLeft(1 * perSecond)
+      else if (keysDown.has(KeyMap.Right)) camera.turnRight(1 * perSecond)
+      
+      angle = (angle + 3.125 * perSecond) % (Math.PI * 2)
+      pipeline.view = camera.viewMatrix()
+      cube.worldMatrix = Matrix.multiply(Matrix.translationWithXYZ(0, 2, 0), Matrix.rotationAroundAxis(axis, angle))
+      floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1,0,0), Math.PI / 2)
       pipeline.addStream(cube)
+      pipeline.addStream(floor)
       frameTime = now
     }, true)
   }
