@@ -22,7 +22,8 @@ export default defineComponent({
   mounted() {
     const keysDown = new Set()
     const pipeline = new Pipeline(this.canvasId)
-    const camera = new Camera(new Vector3(0,0,1), new Vector3(0,1,0), new Vector3(0,2,-12))
+    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 2, -12))
+    const far = Cube.generate()
     const cube = Cube.generate()
     const floor = Circle.generate(24, 15)
     const axis = new Vector3(1, 4.2, 10)
@@ -32,6 +33,8 @@ export default defineComponent({
       Math.PI / 4
     )
     let angle = Math.PI / 2
+
+    far.worldMatrix = Matrix.translationWithXYZ(0,2,10)
 
     window.addEventListener('keydown', (e) => {
       keysDown.add((e as KeyboardEvent).code)
@@ -56,7 +59,6 @@ export default defineComponent({
       const now = new Date().getTime()
       const perSecond = (now - frameTime) * 0.001
 
-
       if (keysDown.has(KeyMap.W)) camera.moveForward(5 * perSecond)
       else if (keysDown.has(KeyMap.S)) camera.moveBackward(5 * perSecond)
       if (keysDown.has(KeyMap.A)) camera.moveLeft(5 * perSecond)
@@ -70,9 +72,10 @@ export default defineComponent({
       angle = (angle + 3.125 * perSecond) % (Math.PI * 2)
       pipeline.view = camera.viewMatrix()
       cube.worldMatrix = Matrix.multiply(Matrix.translationWithXYZ(0, 2, 0), Matrix.rotationAroundAxis(axis, angle))
-      floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1,0,0), Math.PI / 2)
+      floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
       pipeline.addStream(cube)
-      pipeline.addStream(floor)
+      // pipeline.addStream(far)
+      //pipeline.addStream(floor)
       frameTime = now
     }, true)
   }

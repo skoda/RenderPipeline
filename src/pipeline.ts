@@ -27,7 +27,7 @@ export class Pipeline {
   renderTarget: Target
   frameBuffer: ImageData
   depthBuffer: DepthBuffer
-  maxDepth = 500
+  maxDepth = 50
   minDepth = 1
   rasterizer: Rasterizer
 
@@ -52,8 +52,8 @@ export class Pipeline {
 
     const w = this.width / 2.0
     const h = this.height / 2.0
-    this.screenTransform = Matrix.translationWithXYZ(w, h, -this.minDepth).multiplyMatrix(
-      Matrix.scaleWithXYZ(w, -h, this.maxDepth - this.minDepth)
+    this.screenTransform = Matrix.translationWithXYZ(w, h, 0).multiplyMatrix(
+      Matrix.scaleWithXYZ(w, -h, 1)
     )
   }
 
@@ -148,9 +148,13 @@ export class Pipeline {
     }
 
     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
-    vert.pos.z = 1.0 / vert.pos.z
-    vert.pos.x *= vert.pos.z
-    vert.pos.y *= vert.pos.z
+
+    vert.pos.x /= vert.pos.z
+    vert.pos.y /= vert.pos.z
+    // Reciprocal of z, mapped inbetween the depth planes
+    // Reciprocal is what we interpolate, because we need to scale texture coordinates
+    // to ensure perspective correct sampling
+    vert.pos.z = (this.maxDepth - this.minDepth) / (vert.pos.z - this.minDepth)
   }
 
   triangulateClipTargetMapAndRasterize(primitive: Primitive) {
