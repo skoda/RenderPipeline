@@ -34,7 +34,7 @@ export default defineComponent({
     )
     let angle = Math.PI / 2
 
-    far.worldMatrix = Matrix.translationWithXYZ(0,2,10)
+    far.worldMatrix = Matrix.translationWithXYZ(0, 2, 10)
 
     window.addEventListener('keydown', (e) => {
       keysDown.add((e as KeyboardEvent).code)
@@ -42,6 +42,7 @@ export default defineComponent({
     window.addEventListener('keyup', (e) => keysDown.delete((e as KeyboardEvent).code))
 
     cube.loadTexture('marble.png')
+    // cube.loadTexture('testgrid.png')
     floor.loadTexture('flooring.png')
     pipeline.light = Light.withPositionAndColors(
       new Vector3(2, 8, -5),
@@ -68,10 +69,13 @@ export default defineComponent({
       else if (keysDown.has(KeyMap.Down)) camera.pitchDown(1 * perSecond)
       if (keysDown.has(KeyMap.Left)) camera.turnLeft(1 * perSecond)
       else if (keysDown.has(KeyMap.Right)) camera.turnRight(1 * perSecond)
-      
-      angle = (angle + 3.125 * perSecond) % (Math.PI * 2)
+
+      angle = (angle + 0.03125 * perSecond) % (Math.PI * 2)
       pipeline.view = camera.viewMatrix()
-      cube.worldMatrix = Matrix.multiply(Matrix.translationWithXYZ(0, 2, 0), Matrix.rotationAroundAxis(axis, angle))
+      cube.worldMatrix = Matrix.multiply(
+        Matrix.translationWithXYZ(0, 2, 0),
+        Matrix.rotationAroundAxis(axis, angle)
+      )
       floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
       pipeline.addStream(cube)
       // pipeline.addStream(far)

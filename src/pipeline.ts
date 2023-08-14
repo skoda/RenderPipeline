@@ -6,6 +6,15 @@ import { Vertex } from './vertex'
 import { Primitive, Stream, VertexPattern } from './geometry/stream'
 import { DepthBuffer } from './depthBuffer'
 
+enum ClippingFace {
+  Left = 0,
+  Right = 1,
+  Top = 2,
+  Bottom = 3,
+  Front = 4,
+  Back = 5
+}
+
 export class Pipeline {
   view: Matrix
   worldView: Matrix
@@ -151,23 +160,13 @@ export class Pipeline {
 
     vert.pos.x /= vert.pos.z
     vert.pos.y /= vert.pos.z
-    // Reciprocal of z, mapped inbetween the depth planes
-    // Reciprocal is what we interpolate, because we need to scale texture coordinates
-    // to ensure perspective correct sampling
-    vert.pos.z = (this.maxDepth - this.minDepth) / (vert.pos.z - this.minDepth)
+    // Map z to between 0 and 1 (corresponding to depth planes)
+    vert.pos.z = (vert.pos.z - this.minDepth) / (this.maxDepth - this.minDepth)
   }
 
   triangulateClipTargetMapAndRasterize(primitive: Primitive) {
     const { pattern, vertices: v } = primitive
     const triangles: Vertex[][] = []
-    const counterClockwise = (triangle: Vertex[]) => {
-      const pos = triangle.map((vert) => vert.pos)
-      return (
-        (pos[1].x - pos[0].x) * (pos[2].y - pos[1].y) +
-          (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) >
-        0
-      )
-    }
 
     switch (pattern) {
       case VertexPattern.Fan:
@@ -188,14 +187,96 @@ export class Pipeline {
     }
 
     triangles.forEach((tri) => {
-      if (!counterClockwise(tri)) return
-      // Clip triangle here in unit square (possibly generates more triangles)
+      if (!Pipeline.counterClockwise(tri)) return
+
+      // Clip triangle here (possibly generates more triangles)
+      const clipped = Pipeline.clipTriangles([tri])
+
+      clipped.forEach((clippedTri) => {
+        clippedTri.forEach((vert) => {
+          vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
+          vert.pos.z = 1 / vert.pos.z
+        })
+
+        this.rasterizer.triangleDraw(clippedTri)
+      })
+    })
+  }
+
+  static counterClockwise = (triangle: Vertex[]) => {
+    const pos = triangle.map((vert) => vert.pos)
+    return (
+      (pos[1].x - pos[0].x) * (pos[2].y - pos[1].y) +
+        (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) >
+      0
+    )
+  }
+
+  static clipTestForFace = {
+    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x < -1,
+    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x > 1,
+    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y > 1,
+    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y < -1,
+    [ClippingFace.Front]: (vert: Vertex) => vert.pos.z < 0,
+    [ClippingFace.Back]: (vert: Vertex) => vert.pos.z > 1
+  }
+
+  static tForInterpolation = {
+    [ClippingFace.Left]: (inV: Vertex, outV: Vertex) =>
+      (-1 - outV.pos.x) / (inV.pos.x - outV.pos.x),
+    [ClippingFace.Right]: (inV: Vertex, outV: Vertex) =>
+      (1 - outV.pos.x) / (inV.pos.x - outV.pos.x),
+    [ClippingFace.Top]: (inV: Vertex, outV: Vertex) => (1 - outV.pos.y) / (inV.pos.y - outV.pos.y),
+    [ClippingFace.Bottom]: (inV: Vertex, outV: Vertex) =>
+      (-1 - outV.pos.y) / (inV.pos.y - outV.pos.y),
+    [ClippingFace.Front]: (inV: Vertex, outV: Vertex) =>
+      (0 - outV.pos.z) / (inV.pos.z - outV.pos.z),
+    [ClippingFace.Back]: (inV: Vertex, outV: Vertex) => (1 - outV.pos.z) / (inV.pos.z - outV.pos.z)
+  }
+
+  // Recursively clip triangles against every edge of the normalized view frustum
+  static clipTriangles(triangles: Vertex[][], face = ClippingFace.Left): Vertex[][] {
+    const clippedTriangles: Vertex[][] = []
+
+    triangles.forEach((tri) => {
+      const outside: Vertex[] = []
+      const inside: Vertex[] = []
 
       tri.forEach((vert) => {
-        vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
+        Pipeline.clipTestForFace[face](vert) ? outside.push(vert) : inside.push(vert)
       })
 
-      this.rasterizer.triangleDraw(tri)
+      if (outside.length === 3) {
+        return
+      } else if (!outside.length) {
+        clippedTriangles.push(tri)
+      } else {
+        clippedTriangles.push(...this.generateClipped(inside, outside, face))
+      }
     })
+
+    return face === ClippingFace.Back || !clippedTriangles.length
+      ? clippedTriangles
+      : Pipeline.clipTriangles(clippedTriangles, face + 1)
+  }
+
+  static generateClipped(inside: Vertex[], outside: Vertex[], face: ClippingFace) {
+    const edgeVerts: Vertex[] = []
+
+    inside.forEach((inVert) => {
+      outside.forEach((outVert) => {
+        const t = Pipeline.tForInterpolation[face](inVert, outVert)
+        edgeVerts.push(Vertex.perspectiveCorrectInterpolate(outVert, inVert, t))
+      })
+    })
+
+    if (inside.length === 1) {
+      return [[inside[0], ...edgeVerts]]
+    }
+
+    return [
+      [edgeVerts[0], inside[0], inside[1]],
+      [inside[1].clone(), edgeVerts[0].clone(), edgeVerts[1].clone()]
+    ]
   }
 }
