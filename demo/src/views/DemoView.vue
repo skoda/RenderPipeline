@@ -79,9 +79,9 @@ export default defineComponent({
         Matrix.rotationAroundAxis(axis, angle)
       )
       floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
-      // pipeline.addStream(cube)
+      pipeline.addStream(cube)
       // pipeline.addStream(far)
-      pipeline.addStream(floor)
+      // pipeline.addStream(floor)
       frameTime = now
     }, true)
   }
