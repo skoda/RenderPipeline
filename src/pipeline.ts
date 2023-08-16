@@ -94,7 +94,7 @@ export class Pipeline {
 
     const w = this.width / 2.0
     const h = this.height / 2.0
-    this.screenTransform = Matrix.translationWithXYZ(w, h, 0).multiplyMatrix(
+    this.screenTransform = Matrix.translationWithXYZ(w - 0.5, h - 0.5, 0).multiplyMatrix(
       Matrix.scaleWithXYZ(w, -h, 1)
     )
   }
