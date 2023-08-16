@@ -222,7 +222,7 @@ export class Pipeline {
         // Ideally this would come before clipping, but since I didn't manage to get
         // clipping working outside of view space... here it is it doesn't work before
         // the perspective divide, because flattening can change screen order of verts
-        !Pipeline.counterClockwise(clippedTri) && this.rasterizer.triangleDraw(clippedTri)
+        Pipeline.counterClockwise(clippedTri) && this.rasterizer.triangleDraw(clippedTri)
       })
     })
   }
@@ -231,7 +231,7 @@ export class Pipeline {
     const pos = triangle.map((vert) => vert.pos)
     return (
       (pos[1].x - pos[0].x) * (pos[2].y - pos[1].y) +
-        (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) >
+        (pos[1].y - pos[0].y) * (pos[1].x - pos[2].x) <
       0
     )
   }

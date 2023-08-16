@@ -37,7 +37,7 @@ export class Cube {
         new Vertex(br, normal, diffuse, specular, txBr),
         new Vertex(tr, normal, diffuse, specular, txTr)
       ]
-      stream.addPrimitives(new Primitive(VertexPattern.Fan, verts, false))
+      stream.addPrimitive(new Primitive(VertexPattern.Fan, verts, false))
     }
 
     constructFace(v0, v1, v2, v3, new Vector3(0, 0, -1)) // -z

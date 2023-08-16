@@ -27,8 +27,8 @@ export class Stream {
   worldMatrix: Matrix = Matrix.withIdentity()
   texture?: Texture
 
-  addPrimitives(primitives: Primitive, clone = true) {
-    this.primitives.push(clone ? primitives.clone() : primitives)
+  addPrimitive(primitive: Primitive, clone = true) {
+    this.primitives.push(clone ? primitive.clone() : primitive)
   }
 
   async loadTexture(url: string) {

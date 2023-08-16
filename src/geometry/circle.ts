@@ -33,7 +33,7 @@ export class Circle {
       )
     }
 
-    stream.addPrimitives(new Primitive(VertexPattern.Fan, verts, false))
+    stream.addPrimitive(new Primitive(VertexPattern.Fan, verts, false))
 
     return stream
   }

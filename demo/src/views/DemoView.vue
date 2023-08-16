@@ -1,6 +1,16 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Pipeline, Matrix, Vector3, Light, Camera, Circle, Color, Cube } from 'render-pipeline'
+import {
+  Pipeline,
+  Matrix,
+  Vector3,
+  Light,
+  Camera,
+  Circle,
+  Color,
+  Cube,
+  Cylinder
+} from 'render-pipeline'
 
 enum KeyMap {
   W = 'KeyW',
@@ -22,7 +32,7 @@ export default defineComponent({
   mounted() {
     const keysDown = new Set()
     const pipeline = new Pipeline(this.canvasId)
-    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 1, -15))
+    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 2.25, -15))
 
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,
@@ -37,7 +47,7 @@ export default defineComponent({
     window.addEventListener('keyup', (e) => keysDown.delete((e as KeyboardEvent).code))
 
     pipeline.light = Light.withPositionAndColors(
-      new Vector3(-8, 30, 30),
+      new Vector3(-20, 30, -15),
       new Color(0.3, 0.2, 0.1),
       new Color(1, 0.9, 0.8),
       new Color(0.75, 0.5, 0.25)
@@ -50,6 +60,10 @@ export default defineComponent({
     const cube = Cube.generate()
     const cubeAxis = new Vector3(1, 4.2, 10)
     cube.loadTexture('marble.png')
+
+    const pillar = Cylinder.generate(16, 0.65, 2)
+    pillar.loadTexture('marble.png')
+    pillar.worldMatrix = Matrix.translationWithXYZ(0, 1, 0)
 
     const floor = Circle.generate(24, 35, 4, Color.withWhite(), Color.withValue(0.4))
     floor.loadTexture('flooring.png')
@@ -74,13 +88,14 @@ export default defineComponent({
       angle = (angle + 3.125 * perSecond) % (Math.PI * 2)
 
       cube.worldMatrix = Matrix.multiply(
-        Matrix.translationWithXYZ(0, 2, 0),
+        Matrix.translationWithXYZ(0, 3.25, 0),
         Matrix.rotationAroundAxis(cubeAxis, angle)
       )
 
       pipeline.view = camera.viewMatrix()
       pipeline.addStream(cube)
       pipeline.addStream(floor)
+      pipeline.addStream(pillar)
       frameTime = now
     }, true)
   }
