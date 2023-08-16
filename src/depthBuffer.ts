@@ -2,13 +2,28 @@ export class DepthBuffer {
   buffer: Uint16Array
   width: number
   height: number
+  _maxDepth = 1
+  _minDepth = 0
+  _scale = 1
   curIdx = 0
 
-  constructor(width: number, height: number) {
+  set minDepth(value: number) {
+    this._minDepth = value
+    this._scale = 65535 / (this._maxDepth - this._minDepth)
+  }
+
+  set maxDepth(value: number) {
+    this._maxDepth = value
+    this._scale = 65535 / (this._maxDepth - this._minDepth)
+  }
+
+  constructor(width: number, height: number, maxDepth: number, minDepth: number) {
     this.buffer = new Uint16Array(width * height)
     this.width = width
     this.height = height
-    this.clear
+    this._maxDepth = maxDepth
+    this.minDepth = minDepth // intentionally trigger setter
+    this.clear()
   }
 
   setIndex(x: number, y: number) {
@@ -18,12 +33,7 @@ export class DepthBuffer {
 
   next(depth: number) {
     const idx = this.curIdx++
-
-    // Shouldn't need this after clipping
-    if (depth < 0) return false
-
-    // depth should be 0-1 (after clipping), map to uint16
-    const z = Math.floor(depth * 65535)
+    const z = Math.floor((depth - this._minDepth) * this._scale)
 
     if (z > this.buffer[idx]) return false
     this.buffer[idx] = z

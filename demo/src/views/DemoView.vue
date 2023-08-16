@@ -22,12 +22,8 @@ export default defineComponent({
   mounted() {
     const keysDown = new Set()
     const pipeline = new Pipeline(this.canvasId)
-    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 5, -20))
-    camera.pitchDown(0.2)
-    const far = Cube.generate()
-    const cube = Cube.generate()
-    const floor = Circle.generate(24, 15)
-    const axis = new Vector3(1, 4.2, 10)
+    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 1, -15))
+
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,
       pipeline.height,
@@ -35,52 +31,55 @@ export default defineComponent({
     )
     let angle = Math.PI / 2
 
-    far.worldMatrix = Matrix.translationWithXYZ(0, 2, 10)
-
     window.addEventListener('keydown', (e) => {
       keysDown.add((e as KeyboardEvent).code)
     })
     window.addEventListener('keyup', (e) => keysDown.delete((e as KeyboardEvent).code))
 
-    cube.loadTexture('marble.png')
-    // cube.loadTexture('testgrid.png')
-    // floor.loadTexture('flooring.png')
-    floor.loadTexture('testgrid.png')
     pipeline.light = Light.withPositionAndColors(
-      new Vector3(2, 8, -5),
-      new Color(0.1, 0.1, 0.05),
+      new Vector3(-8, 30, 30),
+      new Color(0.3, 0.2, 0.1),
       new Color(1, 0.9, 0.8),
-      new Color(0.8, 0.6, 0.3)
+      new Color(0.75, 0.5, 0.25)
     )
+    pipeline.setDepthPlanes({ near: 0.25, far: 50 })
     pipeline.shininess = 30
     pipeline.framerateReadoutId = 'framerateView'
-
     pipeline.projection = projection
 
+    const cube = Cube.generate()
+    const cubeAxis = new Vector3(1, 4.2, 10)
+    cube.loadTexture('marble.png')
+
+    const floor = Circle.generate(24, 35, 4, Color.withWhite(), Color.withValue(0.4))
+    floor.loadTexture('flooring.png')
+    floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
+
     let frameTime = new Date().getTime()
+    const yAxisMovementLock = new Vector3(1, 0, 1) // no flying
     pipeline.beginLoop(() => {
       const now = new Date().getTime()
       const perSecond = (now - frameTime) * 0.001
 
-      if (keysDown.has(KeyMap.W)) camera.moveForward(5 * perSecond)
-      else if (keysDown.has(KeyMap.S)) camera.moveBackward(5 * perSecond)
-      if (keysDown.has(KeyMap.A)) camera.moveLeft(5 * perSecond)
-      else if (keysDown.has(KeyMap.D)) camera.moveRight(5 * perSecond)
+      if (keysDown.has(KeyMap.W)) camera.moveForward(5 * perSecond, yAxisMovementLock)
+      else if (keysDown.has(KeyMap.S)) camera.moveBackward(5 * perSecond, yAxisMovementLock)
+      if (keysDown.has(KeyMap.A)) camera.moveLeft(5 * perSecond, yAxisMovementLock)
+      else if (keysDown.has(KeyMap.D)) camera.moveRight(5 * perSecond, yAxisMovementLock)
 
       if (keysDown.has(KeyMap.Up)) camera.pitchUp(1 * perSecond)
       else if (keysDown.has(KeyMap.Down)) camera.pitchDown(1 * perSecond)
       if (keysDown.has(KeyMap.Left)) camera.turnLeft(1 * perSecond)
       else if (keysDown.has(KeyMap.Right)) camera.turnRight(1 * perSecond)
 
-      angle = (angle + 0.03125 * perSecond) % (Math.PI * 2)
-      pipeline.view = camera.viewMatrix()
+      angle = (angle + 3.125 * perSecond) % (Math.PI * 2)
+
       cube.worldMatrix = Matrix.multiply(
         Matrix.translationWithXYZ(0, 2, 0),
-        Matrix.rotationAroundAxis(axis, angle)
+        Matrix.rotationAroundAxis(cubeAxis, angle)
       )
-      floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
+
+      pipeline.view = camera.viewMatrix()
       pipeline.addStream(cube)
-      // pipeline.addStream(far)
       pipeline.addStream(floor)
       frameTime = now
     }, true)

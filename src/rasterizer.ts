@@ -104,7 +104,7 @@ export default class Rasterizer {
     //Draw Scanline
     while (x++ <= xEnd) {
       const depth = 1 / z
-      const pass = true //this.depthBuffer.next(depth)
+      const pass = this.depthBuffer.next(depth)
 
       if (this.texture) {
         pass && this.texture.sample(t.clone().scale(depth), color)

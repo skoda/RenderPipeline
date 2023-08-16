@@ -15,8 +15,8 @@ enum ClippingFace {
   Bottom = 5
 }
 
-const DEFAULT_MAX_DEPTH = 60
-const DEFAULT_MIN_DEPTH = 3
+const DEFAULT_MAX_DEPTH = 100
+const DEFAULT_MIN_DEPTH = 1
 
 export class Pipeline {
   // Transformations and settings
@@ -44,32 +44,23 @@ export class Pipeline {
   depthBuffer: DepthBuffer
   maxDepth = DEFAULT_MAX_DEPTH
   minDepth = DEFAULT_MIN_DEPTH
-  recipMaxDepth = 1 / DEFAULT_MAX_DEPTH
-  recipMinDepth = 1 / DEFAULT_MIN_DEPTH
+
   clipTest = {
-    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x < -vert.pos.z,
-    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x > vert.pos.z,
-    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y < -vert.pos.z,
-    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y > vert.pos.z,
-    [ClippingFace.Front]: (vert: Vertex) => vert.pos.z < this.minDepth,
-    [ClippingFace.Back]: (vert: Vertex) => vert.pos.z > this.maxDepth
+    [ClippingFace.Front]: (vert: Vertex) => vert.pos.z >= this.minDepth,
+    [ClippingFace.Back]: (vert: Vertex) => vert.pos.z <= this.maxDepth,
+    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x >= -vert.pos.z,
+    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x <= vert.pos.z,
+    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y >= -vert.pos.z,
+    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y <= vert.pos.z
   }
-  // clipInterpolation = {
-  //   [ClippingFace.Left]: (a: Vertex, b: Vertex) => (-1 - a.pos.x) / (b.pos.x - a.pos.x),
-  //   [ClippingFace.Right]: (a: Vertex, b: Vertex) => (1 - a.pos.x) / (b.pos.x - a.pos.x),
-  //   [ClippingFace.Top]: (a: Vertex, b: Vertex) => (-1 - a.pos.y) / (b.pos.y - a.pos.y),
-  //   [ClippingFace.Bottom]: (a: Vertex, b: Vertex) => (1 - a.pos.y) / (b.pos.y - a.pos.y),
-  //   [ClippingFace.Front]: (a: Vertex, b: Vertex) => (this.minDepth - a.pos.z) / (b.pos.z - a.pos.z),
-  //   [ClippingFace.Back]: (a: Vertex, b: Vertex) => (a.pos.z - this.maxDepth) / (a.pos.z - b.pos.z)
-  // }
 
   clipInterpolation = {
+    [ClippingFace.Front]: (a: Vector3, b: Vector3) => (this.minDepth - a.z) / (b.z - a.z),
+    [ClippingFace.Back]: (a: Vector3, b: Vector3) => (a.z - this.maxDepth) / (a.z - b.z),
     [ClippingFace.Left]: (a: Vector3, b: Vector3) => (-a.z - a.x) / (-a.z - a.x + b.x + b.z),
     [ClippingFace.Right]: (a: Vector3, b: Vector3) => (a.z - a.x) / (a.z - a.x + b.x - b.z),
     [ClippingFace.Top]: (a: Vector3, b: Vector3) => (-a.z - a.y) / (-a.z - a.y + b.y + b.z),
-    [ClippingFace.Bottom]: (a: Vector3, b: Vector3) => (a.z - a.y) / (a.z - a.y + b.y - b.z),
-    [ClippingFace.Front]: (a: Vector3, b: Vector3) => (this.minDepth - a.z) / (b.z - a.z),
-    [ClippingFace.Back]: (a: Vector3, b: Vector3) => (a.z - this.maxDepth) / (a.z - b.z)
+    [ClippingFace.Bottom]: (a: Vector3, b: Vector3) => (a.z - a.y) / (a.z - a.y + b.y - b.z)
   }
 
   // Metadata / Other
@@ -89,7 +80,7 @@ export class Pipeline {
     this.height = this.screenTarget.canvas.height
     this.renderTarget = Target.withDimensions(this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
-    this.depthBuffer = new DepthBuffer(this.width, this.height)
+    this.depthBuffer = new DepthBuffer(this.width, this.height, this.maxDepth, this.minDepth)
     this.rasterizer = new Rasterizer(this.frameBuffer, this.depthBuffer)
 
     const w = this.width / 2.0
@@ -118,17 +109,8 @@ export class Pipeline {
   }
 
   setDepthPlanes({ far, near }: { far?: number; near?: number }) {
-    far && (this.maxDepth = far)
-    near && (this.minDepth = near)
-    this.recipMaxDepth = 1 / this.maxDepth
-    this.recipMinDepth = 1 / this.minDepth
-
-    // this.clipTest[ClippingFace.Front] = (vert: Vertex) => vert.pos.z > this.recipMinDepth
-    // this.clipTest[ClippingFace.Back] = (vert: Vertex) => vert.pos.z < this.recipMaxDepth
-    // this.clipInterpolation[ClippingFace.Front] = (a: Vertex, b: Vertex) =>
-    //   (this.recipMinDepth - a.pos.z) / (b.pos.z - a.pos.z)
-    // this.clipInterpolation[ClippingFace.Back] = (a: Vertex, b: Vertex) =>
-    //   (this.recipMaxDepth - a.pos.z) / (b.pos.z - a.pos.z)
+    far && ((this.maxDepth = far), (this.depthBuffer.maxDepth = far))
+    near && ((this.minDepth = near), (this.depthBuffer.minDepth = near))
   }
 
   updateFrameRate(frameData: { count: number; time: number }) {
@@ -200,13 +182,6 @@ export class Pipeline {
     }
 
     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
-
-    // const z = 1 / vert.pos.z
-    // vert.pos.x *= z
-    // vert.pos.y *= z
-    // vert.tex.scale(z)
-    // Map z to between 0 and 1 (corresponding to depth planes)
-    // vert.pos.z = 1 / vert.pos.z //(vert.pos.z - this.minDepth) / (this.maxDepth - this.minDepth)
   }
 
   triangulateClipTargetMapAndRasterize(primitive: Primitive) {
@@ -232,21 +207,22 @@ export class Pipeline {
     }
 
     triangles.forEach((tri) => {
-      if (!Pipeline.counterClockwise(tri)) return
-
       // Clip triangle here (possibly generates more triangles)
       const clipped = this.clipTriangles([tri])
 
       clipped.forEach((clippedTri) => {
         clippedTri.forEach((vert) => {
+          vert.pos.x /= vert.pos.z
+          vert.pos.y /= vert.pos.z
           vert.pos.z = 1 / vert.pos.z
-          vert.pos.x *= vert.pos.z
-          vert.pos.y *= vert.pos.z
           vert.tex.scale(vert.pos.z)
           vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
         })
 
-        this.rasterizer.triangleDraw(clippedTri)
+        // Ideally this would come before clipping, but since I didn't manage to get
+        // clipping working outside of view space... here it is it doesn't work before
+        // the perspective divide, because flattening can change screen order of verts
+        !Pipeline.counterClockwise(clippedTri) && this.rasterizer.triangleDraw(clippedTri)
       })
     })
   }
@@ -265,44 +241,48 @@ export class Pipeline {
     const clippedTriangles: Vertex[][] = []
 
     triangles.forEach((tri) => {
-      const outside: Vertex[] = []
-      const inside: Vertex[] = []
+      const inside: number[] = []
 
-      tri.forEach((vert) => {
-        this.clipTest[face](vert) ? outside.push(vert) : inside.push(vert)
+      tri.forEach((vert, i) => {
+        this.clipTest[face](vert) && inside.push(i)
       })
 
-      if (outside.length === 3) {
+      if (!inside.length) {
         return
-      } else if (!outside.length) {
+      } else if (inside.length === 3) {
         clippedTriangles.push(tri)
       } else {
-        clippedTriangles.push(...this.generateClipped(inside, outside, face))
+        clippedTriangles.push(...this.generateClipped(tri, inside, face))
       }
     })
 
-    return face === ClippingFace.Top || !clippedTriangles.length
+    return face === ClippingFace.Bottom || !clippedTriangles.length
       ? clippedTriangles
       : this.clipTriangles(clippedTriangles, face + 1)
   }
 
-  generateClipped(inside: Vertex[], outside: Vertex[], face: ClippingFace) {
-    const edgeVerts: Vertex[] = []
-
-    inside.forEach((inVert) => {
-      outside.forEach((outVert) => {
-        const t = this.clipInterpolation[face](outVert.pos, inVert.pos)
-        edgeVerts.push(Vertex.interpolate(outVert, inVert, t))
-      })
+  generateClipped(tri: Vertex[], inside: number[], face: ClippingFace) {
+    // Clip triangles: need to maintain vertex order, because we haven't
+    // performed backface culling as we aren't in screen space yet.
+    const out: Vertex[] = []
+    tri.forEach((v, i) => {
+      if (inside.includes(i)) {
+        out.push(v)
+      } else {
+        const prevAndNext = [(i + 2) % 3, (i + 1) % 3]
+        prevAndNext.forEach((idx) => {
+          if (!inside.includes(idx)) return
+          const t = this.clipInterpolation[face](v.pos, tri[idx].pos)
+          out.push(Vertex.interpolate(v, tri[idx], t))
+        })
+      }
     })
 
-    if (inside.length === 1) {
-      return [[inside[0], ...edgeVerts]]
-    }
+    if (out.length === 3) return [out]
 
     return [
-      [edgeVerts[0].clone(), inside[0], inside[1]],
-      [inside[1].clone(), edgeVerts[0], edgeVerts[1]]
+      [out[0], out[1], out[2]],
+      [out[2].clone(), out[3], out[0].clone()]
     ]
   }
 }
