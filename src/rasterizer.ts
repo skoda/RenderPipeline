@@ -242,27 +242,5 @@ export default class Rasterizer {
         /////////////////////////////////
       }
     }
-
-    // if (vtx.length === 3) {
-    this.lineDraw(
-      new Vector2(vtx[0].pos.x, vtx[0].pos.y),
-      new Vector2(vtx[1].pos.x, vtx[1].pos.y),
-      new Color(1, 0, 0),
-      new Color(1, 0, 0)
-    )
-    this.lineDraw(
-      new Vector2(vtx[0].pos.x, vtx[0].pos.y),
-      new Vector2(vtx[2].pos.x, vtx[2].pos.y),
-      new Color(0, 1, 0),
-      new Color(0, 1, 0)
-    )
-    this.lineDraw(
-      new Vector2(vtx[2].pos.x, vtx[2].pos.y),
-      new Vector2(vtx[1].pos.x, vtx[1].pos.y),
-      new Color(1, 0, 1),
-      new Color(1, 0, 1)
-    )
-    // return
-    // }
   }
 }

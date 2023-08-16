@@ -20,17 +20,17 @@ export class Circle {
       const a = (i * 2 * Math.PI) / steps
       const cos = Math.cos(a)
       const sin = Math.sin(a)
-      if ([0, 12, 13].includes(i))
-        verts.push(
-          new Vertex(
-            new Vector3(cos * r, sin * r, 0),
-            nrm,
-            diffuse,
-            specular,
-            // new TextureCoord(0.5 * (1 + cos), 0.5 * (1 + sin))
-            new TextureCoord(2 * cos, 2 * sin)
-          )
+      // if ([0, 12, 13].includes(i))
+      verts.push(
+        new Vertex(
+          new Vector3(cos * r, sin * r, 0),
+          nrm,
+          diffuse,
+          specular,
+          // new TextureCoord(0.5 * (1 + cos), 0.5 * (1 + sin))
+          new TextureCoord(2 * cos, 2 * sin)
         )
+      )
     }
 
     stream.addPrimitives(new Primitive(VertexPattern.Fan, verts, false))

@@ -7,16 +7,16 @@ import { Primitive, Stream, VertexPattern } from './geometry/stream'
 import { DepthBuffer } from './depthBuffer'
 
 enum ClippingFace {
-  Left = 0,
-  Right = 1,
-  Top = 2,
-  Bottom = 3,
-  Front = 4,
-  Back = 5
+  Front = 0,
+  Back = 1,
+  Left = 2,
+  Right = 3,
+  Top = 4,
+  Bottom = 5
 }
 
-const DEFAULT_MAX_DEPTH = 25
-const DEFAULT_MIN_DEPTH = 8
+const DEFAULT_MAX_DEPTH = 60
+const DEFAULT_MIN_DEPTH = 3
 
 export class Pipeline {
   // Transformations and settings
@@ -47,20 +47,29 @@ export class Pipeline {
   recipMaxDepth = 1 / DEFAULT_MAX_DEPTH
   recipMinDepth = 1 / DEFAULT_MIN_DEPTH
   clipTest = {
-    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x < -1,
-    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x > 1,
-    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y < -1,
-    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y > 1,
+    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x < -vert.pos.z,
+    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x > vert.pos.z,
+    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y < -vert.pos.z,
+    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y > vert.pos.z,
     [ClippingFace.Front]: (vert: Vertex) => vert.pos.z < this.minDepth,
     [ClippingFace.Back]: (vert: Vertex) => vert.pos.z > this.maxDepth
   }
+  // clipInterpolation = {
+  //   [ClippingFace.Left]: (a: Vertex, b: Vertex) => (-1 - a.pos.x) / (b.pos.x - a.pos.x),
+  //   [ClippingFace.Right]: (a: Vertex, b: Vertex) => (1 - a.pos.x) / (b.pos.x - a.pos.x),
+  //   [ClippingFace.Top]: (a: Vertex, b: Vertex) => (-1 - a.pos.y) / (b.pos.y - a.pos.y),
+  //   [ClippingFace.Bottom]: (a: Vertex, b: Vertex) => (1 - a.pos.y) / (b.pos.y - a.pos.y),
+  //   [ClippingFace.Front]: (a: Vertex, b: Vertex) => (this.minDepth - a.pos.z) / (b.pos.z - a.pos.z),
+  //   [ClippingFace.Back]: (a: Vertex, b: Vertex) => (a.pos.z - this.maxDepth) / (a.pos.z - b.pos.z)
+  // }
+
   clipInterpolation = {
-    [ClippingFace.Left]: (a: Vertex, b: Vertex) => (-1 - a.pos.x) / (b.pos.x - a.pos.x),
-    [ClippingFace.Right]: (a: Vertex, b: Vertex) => (1 - a.pos.x) / (b.pos.x - a.pos.x),
-    [ClippingFace.Top]: (a: Vertex, b: Vertex) => (-1 - a.pos.y) / (b.pos.y - a.pos.y),
-    [ClippingFace.Bottom]: (a: Vertex, b: Vertex) => (1 - a.pos.y) / (b.pos.y - a.pos.y),
-    [ClippingFace.Front]: (a: Vertex, b: Vertex) => (this.minDepth - a.pos.z) / (b.pos.z - a.pos.z),
-    [ClippingFace.Back]: (a: Vertex, b: Vertex) => (a.pos.z - this.maxDepth) / (b.pos.z - a.pos.z)
+    [ClippingFace.Left]: (a: Vector3, b: Vector3) => (-a.z - a.x) / (-a.z - a.x + b.x + b.z),
+    [ClippingFace.Right]: (a: Vector3, b: Vector3) => (a.z - a.x) / (a.z - a.x + b.x - b.z),
+    [ClippingFace.Top]: (a: Vector3, b: Vector3) => (-a.z - a.y) / (-a.z - a.y + b.y + b.z),
+    [ClippingFace.Bottom]: (a: Vector3, b: Vector3) => (a.z - a.y) / (a.z - a.y + b.y - b.z),
+    [ClippingFace.Front]: (a: Vector3, b: Vector3) => (this.minDepth - a.z) / (b.z - a.z),
+    [ClippingFace.Back]: (a: Vector3, b: Vector3) => (a.z - this.maxDepth) / (a.z - b.z)
   }
 
   // Metadata / Other
@@ -113,12 +122,12 @@ export class Pipeline {
     this.recipMaxDepth = 1 / this.maxDepth
     this.recipMinDepth = 1 / this.minDepth
 
-    this.clipTest[ClippingFace.Front] = (vert: Vertex) => vert.pos.z > this.recipMinDepth
-    this.clipTest[ClippingFace.Back] = (vert: Vertex) => vert.pos.z < this.recipMaxDepth
-    this.clipInterpolation[ClippingFace.Front] = (a: Vertex, b: Vertex) =>
-      (this.recipMinDepth - a.pos.z) / (b.pos.z - a.pos.z)
-    this.clipInterpolation[ClippingFace.Back] = (a: Vertex, b: Vertex) =>
-      (this.recipMaxDepth - a.pos.z) / (b.pos.z - a.pos.z)
+    // this.clipTest[ClippingFace.Front] = (vert: Vertex) => vert.pos.z > this.recipMinDepth
+    // this.clipTest[ClippingFace.Back] = (vert: Vertex) => vert.pos.z < this.recipMaxDepth
+    // this.clipInterpolation[ClippingFace.Front] = (a: Vertex, b: Vertex) =>
+    //   (this.recipMinDepth - a.pos.z) / (b.pos.z - a.pos.z)
+    // this.clipInterpolation[ClippingFace.Back] = (a: Vertex, b: Vertex) =>
+    //   (this.recipMaxDepth - a.pos.z) / (b.pos.z - a.pos.z)
   }
 
   updateFrameRate(frameData: { count: number; time: number }) {
@@ -191,10 +200,10 @@ export class Pipeline {
 
     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
 
-    const z = 1 / vert.pos.z
-    vert.pos.x *= z
-    vert.pos.y *= z
-    vert.tex.scale(z)
+    // const z = 1 / vert.pos.z
+    // vert.pos.x *= z
+    // vert.pos.y *= z
+    // vert.tex.scale(z)
     // Map z to between 0 and 1 (corresponding to depth planes)
     // vert.pos.z = 1 / vert.pos.z //(vert.pos.z - this.minDepth) / (this.maxDepth - this.minDepth)
   }
@@ -229,8 +238,11 @@ export class Pipeline {
 
       clipped.forEach((clippedTri) => {
         clippedTri.forEach((vert) => {
-          vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
           vert.pos.z = 1 / vert.pos.z
+          vert.pos.x *= vert.pos.z
+          vert.pos.y *= vert.pos.z
+          vert.tex.scale(vert.pos.z)
+          vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
         })
 
         this.rasterizer.triangleDraw(clippedTri)
@@ -248,7 +260,7 @@ export class Pipeline {
   }
 
   // Recursively clip triangles against every edge of the normalized view frustum
-  clipTriangles(triangles: Vertex[][], face = ClippingFace.Left): Vertex[][] {
+  clipTriangles(triangles: Vertex[][], face = ClippingFace.Front): Vertex[][] {
     const clippedTriangles: Vertex[][] = []
 
     triangles.forEach((tri) => {
@@ -268,7 +280,7 @@ export class Pipeline {
       }
     })
 
-    return face === ClippingFace.Back || !clippedTriangles.length
+    return face === ClippingFace.Top || !clippedTriangles.length
       ? clippedTriangles
       : this.clipTriangles(clippedTriangles, face + 1)
   }
@@ -278,7 +290,7 @@ export class Pipeline {
 
     inside.forEach((inVert) => {
       outside.forEach((outVert) => {
-        const t = this.clipInterpolation[face](outVert, inVert)
+        const t = this.clipInterpolation[face](outVert.pos, inVert.pos)
         edgeVerts.push(Vertex.interpolate(outVert, inVert, t))
       })
     })
