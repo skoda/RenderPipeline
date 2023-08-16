@@ -52,12 +52,12 @@ export default class Rasterizer {
     this.buffer[this.curIdx++] = 255
   }
 
-  lineDraw(a: Vector2, b: Vector2, aColor: Color, bColor: Color) {
+  lineDraw(a: Vector2, b: Vector2, aColor = Color.withWhite(), bColor = Color.withWhite()) {
     const pos = a.clone()
-    const col = aColor.clone()
+    const col = aColor.clone().scale(256)
     const length = Math.round(Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)))
     const step = Vector2.subtract(b, a).scale(1 / length)
-    const colStep = Color.subtract(bColor, aColor).scale(1 / length)
+    const colStep = Color.subtract(bColor, aColor).scale(256 / length)
 
     for (let i = 0; i < length; ++i) {
       this.setPixel(Math.round(pos.x), Math.round(pos.y), col.r, col.g, col.b)
@@ -104,7 +104,7 @@ export default class Rasterizer {
     //Draw Scanline
     while (x++ <= xEnd) {
       const depth = 1 / z
-      const pass = this.depthBuffer.next(depth)
+      const pass = true //this.depthBuffer.next(depth)
 
       if (this.texture) {
         pass && this.texture.sample(t.clone().scale(depth), color)
@@ -173,9 +173,9 @@ export default class Rasterizer {
 
     if (this.texture) {
       const txSize = new TextureCoord(this.texture.width, this.texture.height)
-      top.tex.scale(top.pos.z).multiply(txSize)
-      mid.tex.scale(mid.pos.z).multiply(txSize)
-      bot.tex.scale(bot.pos.z).multiply(txSize)
+      top.tex.multiply(txSize)
+      mid.tex.multiply(txSize)
+      bot.tex.multiply(txSize)
       mMid.tex = TextureCoord.subtract(mid.tex, top.tex).scale(invMidHeight)
       mBot.tex = TextureCoord.subtract(bot.tex, top.tex).scale(invHeight)
       left.tex = ml.tex.clone().scale(offset).add(top.tex)
@@ -242,5 +242,27 @@ export default class Rasterizer {
         /////////////////////////////////
       }
     }
+
+    // if (vtx.length === 3) {
+    this.lineDraw(
+      new Vector2(vtx[0].pos.x, vtx[0].pos.y),
+      new Vector2(vtx[1].pos.x, vtx[1].pos.y),
+      new Color(1, 0, 0),
+      new Color(1, 0, 0)
+    )
+    this.lineDraw(
+      new Vector2(vtx[0].pos.x, vtx[0].pos.y),
+      new Vector2(vtx[2].pos.x, vtx[2].pos.y),
+      new Color(0, 1, 0),
+      new Color(0, 1, 0)
+    )
+    this.lineDraw(
+      new Vector2(vtx[2].pos.x, vtx[2].pos.y),
+      new Vector2(vtx[1].pos.x, vtx[1].pos.y),
+      new Color(1, 0, 1),
+      new Color(1, 0, 1)
+    )
+    // return
+    // }
   }
 }

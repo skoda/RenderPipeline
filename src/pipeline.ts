@@ -15,30 +15,59 @@ enum ClippingFace {
   Back = 5
 }
 
+const DEFAULT_MAX_DEPTH = 25
+const DEFAULT_MIN_DEPTH = 8
+
 export class Pipeline {
+  // Transformations and settings
   view: Matrix
   worldView: Matrix
   projection: Matrix
   screenTransform: Matrix
-  cameraViewPosition: Vector3
-  lightViewPosition: Vector3
-  streams: Stream[]
+  streams: Stream[] = []
   light?: Light
   shininess = 0
 
-  frameRate = 0
-  framerateReadoutId = ''
+  // Calculated view space positions
+  cameraViewPosition: Vector3
+  lightViewPosition: Vector3
 
-  width: number
-  height: number
-
+  // Rasterization objects and values
+  rasterizer: Rasterizer
   screenTarget: Target
   renderTarget: Target
   frameBuffer: ImageData
+  width: number
+  height: number
+
+  // Depth and clipping
   depthBuffer: DepthBuffer
-  maxDepth = 50
-  minDepth = 1
-  rasterizer: Rasterizer
+  maxDepth = DEFAULT_MAX_DEPTH
+  minDepth = DEFAULT_MIN_DEPTH
+  recipMaxDepth = 1 / DEFAULT_MAX_DEPTH
+  recipMinDepth = 1 / DEFAULT_MIN_DEPTH
+  clipTest = {
+    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x < -1,
+    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x > 1,
+    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y < -1,
+    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y > 1,
+    [ClippingFace.Front]: (vert: Vertex) => vert.pos.z > this.recipMinDepth,
+    [ClippingFace.Back]: (vert: Vertex) => vert.pos.z < this.recipMaxDepth
+  }
+  clipInterpolation = {
+    [ClippingFace.Left]: (a: Vertex, b: Vertex) => (-1 - a.pos.x) / (b.pos.x - a.pos.x),
+    [ClippingFace.Right]: (a: Vertex, b: Vertex) => (1 - a.pos.x) / (b.pos.x - a.pos.x),
+    [ClippingFace.Top]: (a: Vertex, b: Vertex) => (-1 - a.pos.y) / (b.pos.y - a.pos.y),
+    [ClippingFace.Bottom]: (a: Vertex, b: Vertex) => (1 - a.pos.y) / (b.pos.y - a.pos.y),
+    [ClippingFace.Front]: (a: Vertex, b: Vertex) =>
+      (this.recipMinDepth - a.pos.z) / (b.pos.z - a.pos.z),
+    [ClippingFace.Back]: (a: Vertex, b: Vertex) =>
+      (this.recipMaxDepth - a.pos.z) / (b.pos.z - a.pos.z)
+  }
+
+  // Metadata / Other
+  frameRate = 0
+  framerateReadoutId = ''
 
   constructor(renderCanvasId: string) {
     this.view = Matrix.withIdentity()
@@ -47,9 +76,6 @@ export class Pipeline {
     this.screenTransform = Matrix.withIdentity()
     this.cameraViewPosition = new Vector3(0, 0, 0)
     this.lightViewPosition = new Vector3(0, 0, 0)
-    this.streams = []
-    this.shininess = 0
-    this.frameRate = 0
 
     this.screenTarget = Target.withCanvasElementId(renderCanvasId)
     this.width = this.screenTarget.canvas.width
@@ -86,6 +112,15 @@ export class Pipeline {
   setDepthPlanes({ far, near }: { far?: number; near?: number }) {
     far && (this.maxDepth = far)
     near && (this.minDepth = near)
+    this.recipMaxDepth = 1 / this.maxDepth
+    this.recipMinDepth = 1 / this.minDepth
+
+    this.clipTest[ClippingFace.Front] = (vert: Vertex) => vert.pos.z > this.recipMinDepth
+    this.clipTest[ClippingFace.Back] = (vert: Vertex) => vert.pos.z < this.recipMaxDepth
+    this.clipInterpolation[ClippingFace.Front] = (a: Vertex, b: Vertex) =>
+      (this.recipMinDepth - a.pos.z) / (b.pos.z - a.pos.z)
+    this.clipInterpolation[ClippingFace.Back] = (a: Vertex, b: Vertex) =>
+      (this.recipMaxDepth - a.pos.z) / (b.pos.z - a.pos.z)
   }
 
   updateFrameRate(frameData: { count: number; time: number }) {
@@ -158,10 +193,12 @@ export class Pipeline {
 
     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))
 
-    vert.pos.x /= vert.pos.z
-    vert.pos.y /= vert.pos.z
+    vert.pos.z = 1 / vert.pos.z
+    vert.pos.x *= vert.pos.z
+    vert.pos.y *= vert.pos.z
+    vert.tex.scale(vert.pos.z)
     // Map z to between 0 and 1 (corresponding to depth planes)
-    vert.pos.z = (vert.pos.z - this.minDepth) / (this.maxDepth - this.minDepth)
+    // vert.pos.z = 1 / vert.pos.z //(vert.pos.z - this.minDepth) / (this.maxDepth - this.minDepth)
   }
 
   triangulateClipTargetMapAndRasterize(primitive: Primitive) {
@@ -190,12 +227,11 @@ export class Pipeline {
       if (!Pipeline.counterClockwise(tri)) return
 
       // Clip triangle here (possibly generates more triangles)
-      const clipped = Pipeline.clipTriangles([tri])
+      const clipped = this.clipTriangles([tri])
 
       clipped.forEach((clippedTri) => {
         clippedTri.forEach((vert) => {
           vert.pos = this.screenTransform.multiplyVector(Vector4.withPosition(vert.pos))
-          vert.pos.z = 1 / vert.pos.z
         })
 
         this.rasterizer.triangleDraw(clippedTri)
@@ -212,30 +248,8 @@ export class Pipeline {
     )
   }
 
-  static clipTestForFace = {
-    [ClippingFace.Left]: (vert: Vertex) => vert.pos.x < -1,
-    [ClippingFace.Right]: (vert: Vertex) => vert.pos.x > 1,
-    [ClippingFace.Top]: (vert: Vertex) => vert.pos.y > 1,
-    [ClippingFace.Bottom]: (vert: Vertex) => vert.pos.y < -1,
-    [ClippingFace.Front]: (vert: Vertex) => vert.pos.z < 0,
-    [ClippingFace.Back]: (vert: Vertex) => vert.pos.z > 1
-  }
-
-  static tForInterpolation = {
-    [ClippingFace.Left]: (inV: Vertex, outV: Vertex) =>
-      (-1 - outV.pos.x) / (inV.pos.x - outV.pos.x),
-    [ClippingFace.Right]: (inV: Vertex, outV: Vertex) =>
-      (1 - outV.pos.x) / (inV.pos.x - outV.pos.x),
-    [ClippingFace.Top]: (inV: Vertex, outV: Vertex) => (1 - outV.pos.y) / (inV.pos.y - outV.pos.y),
-    [ClippingFace.Bottom]: (inV: Vertex, outV: Vertex) =>
-      (-1 - outV.pos.y) / (inV.pos.y - outV.pos.y),
-    [ClippingFace.Front]: (inV: Vertex, outV: Vertex) =>
-      (0 - outV.pos.z) / (inV.pos.z - outV.pos.z),
-    [ClippingFace.Back]: (inV: Vertex, outV: Vertex) => (1 - outV.pos.z) / (inV.pos.z - outV.pos.z)
-  }
-
   // Recursively clip triangles against every edge of the normalized view frustum
-  static clipTriangles(triangles: Vertex[][], face = ClippingFace.Left): Vertex[][] {
+  clipTriangles(triangles: Vertex[][], face = ClippingFace.Left): Vertex[][] {
     const clippedTriangles: Vertex[][] = []
 
     triangles.forEach((tri) => {
@@ -243,7 +257,7 @@ export class Pipeline {
       const inside: Vertex[] = []
 
       tri.forEach((vert) => {
-        Pipeline.clipTestForFace[face](vert) ? outside.push(vert) : inside.push(vert)
+        this.clipTest[face](vert) ? outside.push(vert) : inside.push(vert)
       })
 
       if (outside.length === 3) {
@@ -257,16 +271,16 @@ export class Pipeline {
 
     return face === ClippingFace.Back || !clippedTriangles.length
       ? clippedTriangles
-      : Pipeline.clipTriangles(clippedTriangles, face + 1)
+      : this.clipTriangles(clippedTriangles, face + 1)
   }
 
-  static generateClipped(inside: Vertex[], outside: Vertex[], face: ClippingFace) {
+  generateClipped(inside: Vertex[], outside: Vertex[], face: ClippingFace) {
     const edgeVerts: Vertex[] = []
 
     inside.forEach((inVert) => {
       outside.forEach((outVert) => {
-        const t = Pipeline.tForInterpolation[face](inVert, outVert)
-        edgeVerts.push(Vertex.perspectiveCorrectInterpolate(outVert, inVert, t))
+        const t = this.clipInterpolation[face](outVert, inVert)
+        edgeVerts.push(Vertex.interpolate(outVert, inVert, t))
       })
     })
 
@@ -275,8 +289,8 @@ export class Pipeline {
     }
 
     return [
-      [edgeVerts[0], inside[0], inside[1]],
-      [inside[1].clone(), edgeVerts[0].clone(), edgeVerts[1].clone()]
+      [edgeVerts[0].clone(), inside[0], inside[1]],
+      [inside[1].clone(), edgeVerts[0], edgeVerts[1]]
     ]
   }
 }

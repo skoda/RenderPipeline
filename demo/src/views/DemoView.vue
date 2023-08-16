@@ -22,7 +22,8 @@ export default defineComponent({
   mounted() {
     const keysDown = new Set()
     const pipeline = new Pipeline(this.canvasId)
-    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 2, -12))
+    const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 5, -20))
+    camera.pitchDown(0.2)
     const far = Cube.generate()
     const cube = Cube.generate()
     const floor = Circle.generate(24, 15)
@@ -43,7 +44,8 @@ export default defineComponent({
 
     cube.loadTexture('marble.png')
     // cube.loadTexture('testgrid.png')
-    floor.loadTexture('flooring.png')
+    // floor.loadTexture('flooring.png')
+    floor.loadTexture('testgrid.png')
     pipeline.light = Light.withPositionAndColors(
       new Vector3(2, 8, -5),
       new Color(0.1, 0.1, 0.05),
@@ -77,9 +79,9 @@ export default defineComponent({
         Matrix.rotationAroundAxis(axis, angle)
       )
       floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
-      pipeline.addStream(cube)
+      // pipeline.addStream(cube)
       // pipeline.addStream(far)
-      //pipeline.addStream(floor)
+      pipeline.addStream(floor)
       frameTime = now
     }, true)
   }

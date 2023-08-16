@@ -114,7 +114,7 @@ export default class Texture {
     }
   }
 
-  sample(coord: TextureCoord, out: Color, mode = TextureAddressingMode.Wrap) {
+  sample(coord: TextureCoord, out: Color, mode = TextureAddressingMode.Clamp) {
     const method = Texture.addressingMethod[mode]
     const u = method(coord.u, this.width)
     const v = method(coord.v, this.height)

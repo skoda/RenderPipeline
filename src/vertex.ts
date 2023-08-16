@@ -27,20 +27,13 @@ export class Vertex {
     return new Vertex(this.pos, this.nrm, this.diff, this.spec, this.tex)
   }
 
-  static perspectiveCorrectInterpolate(a: Vertex, b: Vertex, t: number) {
+  static interpolate(a: Vertex, b: Vertex, t: number) {
     b = b.clone()
-    const aPos = a.pos.clone()
-    const aTex = a.tex.clone()
-    b.pos.z = 1 / b.pos.z
-    b.tex.scale(b.pos.z)
-    aPos.z = 1 / aPos.z
-    aTex.scale(aPos.z)
-    b.pos.subtract(aPos).scale(t).add(aPos)
-    b.pos.z = 1 / b.pos.z
+    b.pos.subtract(a.pos).scale(t).add(a.pos)
     b.nrm.subtract(a.nrm).scale(t).add(a.nrm)
     b.diff.subtract(a.diff).scale(t).add(a.diff)
     b.spec.subtract(a.spec).scale(t).add(a.spec)
-    b.tex.subtract(aTex).scale(t).add(aTex).scale(b.pos.z)
+    b.tex.subtract(a.tex).scale(t).add(a.tex)
     return b
   }
 }
