@@ -5,6 +5,7 @@ import { Matrix, Vector3, Vector4 } from './math'
 import { Vertex } from './vertex'
 import { Primitive, Stream, VertexPattern } from './geometry/stream'
 import { DepthBuffer } from './depthBuffer'
+import { Texture, TextureAddressingMode } from './texture'
 
 enum ClippingFace {
   Front = 0,
@@ -17,6 +18,24 @@ enum ClippingFace {
 
 const DEFAULT_MAX_DEPTH = 100
 const DEFAULT_MIN_DEPTH = 1
+
+export class PipelineSettings {
+  texture?: Texture
+  textureMode = TextureAddressingMode.Clamp
+  ignoreDepth = false
+  light?: Light
+  shininess?: number
+
+  clone() {
+    const clone = new PipelineSettings()
+    clone.texture = this.texture
+    clone.textureMode = this.textureMode
+    clone.ignoreDepth = this.ignoreDepth
+    clone.light = this.light
+    clone.shininess = this.shininess
+    return clone
+  }
+}
 
 export class Pipeline {
   // Transformations and settings
@@ -92,7 +111,7 @@ export class Pipeline {
   }
 
   beginLoop(loop: () => void, vsync = true) {
-    const frameData = { count: 0, time: new Date().getTime() }
+    const frameData = { count: 0, time: performance.now() }
     const pipelineLoop = () => {
       this.updateFrameRate(frameData)
       this.present()
@@ -115,7 +134,7 @@ export class Pipeline {
 
   updateFrameRate(frameData: { count: number; time: number }) {
     if (!this.framerateReadoutId) return
-    const now = new Date().getTime()
+    const now = performance.now()
     if (++frameData.count >= 10) {
       this.frameRate = 10000 / Math.max(1, now - frameData.time)
       const el = document.getElementById(this.framerateReadoutId)
@@ -139,6 +158,14 @@ export class Pipeline {
     this.clear()
   }
 
+  applySettings(settings: PipelineSettings) {
+    this.rasterizer.setTexture(settings.texture)
+    Texture.mode = settings.textureMode ?? TextureAddressingMode.Clamp
+    this.shininess = settings.shininess ?? this.shininess
+    this.depthBuffer.skip = settings.ignoreDepth
+    console.log(this.depthBuffer.skip)
+  }
+
   draw() {
     if (this.light) {
       const vc = this.view.column(3)
@@ -146,8 +173,14 @@ export class Pipeline {
       this.lightViewPosition = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
     }
 
+    const defaultShininess = this.shininess // Cache global shininess to reset
     this.streams.forEach((stream) => {
-      this.rasterizer.setTexture(stream.texture)
+      // if (stream.settings.ignoreDepth) {
+      //   console.log('break')
+      //   debugger
+      // }
+      console.log(stream.settings)
+      this.applySettings(stream.settings)
       this.worldView = Matrix.multiply(this.view, stream.worldMatrix)
 
       stream.primitives.forEach((p) => {
@@ -156,6 +189,7 @@ export class Pipeline {
         })
         this.triangulateClipTargetMapAndRasterize(p)
       })
+      this.shininess = defaultShininess
     })
   }
 

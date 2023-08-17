@@ -63,12 +63,13 @@ export class TextureCoord {
   }
 }
 
-export default class Texture {
+export class Texture {
   data: Uint8ClampedArray
   width: number
   height: number
 
   static cache: Record<string, Texture> = {}
+  static mode = TextureAddressingMode.Clamp
 
   static async withURL(url: string): Promise<Texture> {
     if (this.cache[url]) return this.cache[url]
@@ -114,8 +115,8 @@ export default class Texture {
     }
   }
 
-  sample(coord: TextureCoord, out: Color, mode = TextureAddressingMode.Wrap) {
-    const method = Texture.addressingMethod[mode]
+  sample(coord: TextureCoord, out: Color) {
+    const method = Texture.addressingMethod[Texture.mode]
     const u = method(coord.u, this.width)
     const v = method(coord.v, this.height)
 

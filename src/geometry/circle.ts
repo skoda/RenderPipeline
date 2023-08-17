@@ -7,12 +7,11 @@ import { Stream, Primitive, VertexPattern } from './stream'
 export class Circle {
   static generate(
     steps = 12,
-    size = 1,
+    radius = 0.5,
     txScale = 1,
     diffuse = Color.withWhite(),
     specular = Color.withWhite()
   ): Stream {
-    const r = size / 2
     const stream = new Stream()
     const nrm = new Vector3(0, 0, -1)
     const verts: Vertex[] = []
@@ -24,7 +23,7 @@ export class Circle {
       const sin = Math.sin(a)
       verts.push(
         new Vertex(
-          new Vector3(cos * r, sin * r, 0),
+          new Vector3(cos * radius, sin * radius, 0),
           nrm,
           diffuse,
           specular,

@@ -33,14 +33,14 @@ export class Cylinder {
           sideNrm,
           diffuse,
           specular,
-          new TextureCoord(i / steps, 0)
+          new TextureCoord(Math.abs((2 * i) / steps - 1), 0)
         ),
         new Vertex(
           new Vector3(cos * radius, -height, sin * radius),
           sideNrm,
           diffuse,
           specular,
-          new TextureCoord(i / steps, 1)
+          new TextureCoord(Math.abs((2 * i) / steps - 1), 1)
         )
       )
 
@@ -53,7 +53,7 @@ export class Cylinder {
           topNrm,
           diffuse,
           specular,
-          new TextureCoord(1 + cos, 1 + sin)
+          new TextureCoord((1 + cos) / 2, (1 + sin) / 2)
         )
       )
 
@@ -63,7 +63,7 @@ export class Cylinder {
           botNrm,
           diffuse,
           specular,
-          new TextureCoord(1 + cos, 1 + sin)
+          new TextureCoord((1 + cos) / 2, (1 + sin) / 2)
         )
       )
     }

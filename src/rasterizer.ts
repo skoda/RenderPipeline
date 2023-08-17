@@ -1,5 +1,5 @@
 import { Color } from './color'
-import Texture, { TextureCoord } from './texture'
+import { Texture, TextureCoord } from './texture'
 import { Vector2, Vector3 } from './math'
 import { Vertex } from './vertex'
 import { DepthBuffer } from './depthBuffer'
@@ -109,7 +109,6 @@ export default class Rasterizer {
       if (this.texture) {
         pass && this.texture.sample(t.clone().scale(depth), color)
         t.add(mt)
-        z += mz
       } else {
         color.r = color.g = color.b = 1.0
       }
@@ -121,6 +120,7 @@ export default class Rasterizer {
         this.curIdx += 4
       }
 
+      z += mz
       diff.add(mdiff)
       spec.add(mspec)
     }

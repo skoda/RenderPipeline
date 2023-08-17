@@ -9,7 +9,10 @@ import {
   Circle,
   Color,
   Cube,
-  Cylinder
+  Cylinder,
+  Sphere,
+  Texture,
+  TextureAddressingMode
 } from 'render-pipeline'
 
 enum KeyMap {
@@ -29,11 +32,15 @@ export default defineComponent({
       canvasId: 'screenbuffer'
     }
   },
-  mounted() {
+  async mounted() {
     const keysDown = new Set()
+    window.addEventListener('keydown', (e) => {
+      keysDown.add((e as KeyboardEvent).code)
+    })
+    window.addEventListener('keyup', (e) => keysDown.delete((e as KeyboardEvent).code))
+
     const pipeline = new Pipeline(this.canvasId)
     const camera = new Camera(new Vector3(0, 0, 1), new Vector3(0, 1, 0), new Vector3(0, 2.25, -15))
-
     const projection = Matrix.projectionWithViewportAndFieldOfView(
       pipeline.width,
       pipeline.height,
@@ -41,38 +48,64 @@ export default defineComponent({
     )
     let angle = Math.PI / 2
 
-    window.addEventListener('keydown', (e) => {
-      keysDown.add((e as KeyboardEvent).code)
-    })
-    window.addEventListener('keyup', (e) => keysDown.delete((e as KeyboardEvent).code))
+    await Promise.allSettled([
+      Texture.withURL('marble.png'),
+      Texture.withURL('earth.png'),
+      Texture.withURL('flooring.png'),
+      Texture.withURL('stars.png')
+    ])
 
     pipeline.light = Light.withPositionAndColors(
-      new Vector3(-20, 30, -15),
+      new Vector3(-10, 15, -7.5),
       new Color(0.3, 0.2, 0.1),
       new Color(1, 0.9, 0.8),
-      new Color(0.75, 0.5, 0.25)
+      new Color(0.9, 0.8, 0.6)
     )
-    pipeline.setDepthPlanes({ near: 0.25, far: 50 })
+    pipeline.setDepthPlanes({ near: 0.25, far: 75 })
     pipeline.shininess = 30
     pipeline.framerateReadoutId = 'framerateView'
     pipeline.projection = projection
 
-    const cube = Cube.generate()
+    const floor = Circle.generate(48, 20, 4, Color.withWhite(), Color.withValue(0.4))
+    floor.loadTexture('flooring.png')
+    floor.worldMatrix = Matrix.rotationWithBasisVectors(
+      new Vector3(0, -1, 0),
+      new Vector3(0, 0, -1),
+      new Vector3(1, 0, 0)
+    )
+    floor.settings.textureMode = TextureAddressingMode.Wrap
+    floor.settings.shininess = 4
+
+    const cube = Cube.generate(1, Color.withWhite(), new Color(0.5, 0.3, 0.1))
     const cubeAxis = new Vector3(1, 4.2, 10)
     cube.loadTexture('marble.png')
 
-    const pillar = Cylinder.generate(16, 0.65, 2)
+    const globe = Sphere.generate(24, 0.75)
+    globe.loadTexture('earth.png')
+    globe.settings.shininess = 10
+
+    // const background = Sphere.generate(4, 30, Color.withValue(50), Color.withBlack())
+    // background.loadTexture('stars.png')
+    // background.settings.ignoreDepth = true // Must add this to pipeline first
+
+    const pillar = Cylinder.generate(24, 0.65, 2)
     pillar.loadTexture('marble.png')
     pillar.worldMatrix = Matrix.translationWithXYZ(0, 1, 0)
 
-    const floor = Circle.generate(24, 35, 4, Color.withWhite(), Color.withValue(0.4))
-    floor.loadTexture('flooring.png')
-    floor.worldMatrix = Matrix.rotationAroundAxis(new Vector3(1, 0, 0), Math.PI / 2)
+    // const pillarBase = Cylinder.generate(4, 1.4, 0.3)
+    // pillarBase.worldMatrix = Matrix.translationWithXYZ(0, 0.15, 0)
+    const pillarBase = Cube.generate(2)
+    pillarBase.worldMatrix = Matrix.translationWithXYZ(0, 0.125, 0).multiplyMatrix(
+      Matrix.scaleWithXYZ(1, 0.125, 1)
+    )
+    pillarBase.loadTexture('marble.png')
 
-    let frameTime = new Date().getTime()
+    const lightBall = Sphere.generate(8)
+
+    let frameTime = performance.now()
     const yAxisMovementLock = new Vector3(1, 0, 1) // no flying
     pipeline.beginLoop(() => {
-      const now = new Date().getTime()
+      const now = performance.now()
       const perSecond = (now - frameTime) * 0.001
 
       if (keysDown.has(KeyMap.W)) camera.moveForward(5 * perSecond, yAxisMovementLock)
@@ -92,10 +125,29 @@ export default defineComponent({
         Matrix.rotationAroundAxis(cubeAxis, angle)
       )
 
+      globe.worldMatrix = Matrix.translationWithXYZ(0, 3.25, 0).multiplyMatrix(
+        Matrix.rotationAroundAxis(new Vector3(0, -1, 0), angle)
+      )
+
+      lightBall.worldMatrix = Matrix.translationWithVector(
+        Vector3.add(
+          pipeline.light!.pos,
+          Vector3.subtract(pipeline.light!.pos, camera.position).normalize().scale(2)
+        )
+      )
+
+      // background.worldMatrix = Matrix.translationWithVector(camera.position).multiplyMatrix(
+      //   Matrix.scaleWithXYZ(-1, 1, 1)
+      // )
+
       pipeline.view = camera.viewMatrix()
-      pipeline.addStream(cube)
+      // pipeline.addStream(background)
+      // pipeline.addStream(cube)
       pipeline.addStream(floor)
       pipeline.addStream(pillar)
+      pipeline.addStream(pillarBase)
+      pipeline.addStream(globe)
+      pipeline.addStream(lightBall)
       frameTime = now
     }, true)
   }

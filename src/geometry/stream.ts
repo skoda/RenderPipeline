@@ -1,5 +1,6 @@
 import { Matrix } from '../math'
-import Texture from '../texture'
+import { PipelineSettings } from '../pipeline'
+import { Texture } from '../texture'
 import { Vertex } from '../vertex'
 
 export enum VertexPattern {
@@ -24,20 +25,20 @@ export class Primitive {
 
 export class Stream {
   primitives: Primitive[] = []
-  worldMatrix: Matrix = Matrix.withIdentity()
-  texture?: Texture
+  worldMatrix = Matrix.withIdentity()
+  settings = new PipelineSettings()
 
   addPrimitive(primitive: Primitive, clone = true) {
     this.primitives.push(clone ? primitive.clone() : primitive)
   }
 
   async loadTexture(url: string) {
-    this.texture = await Texture.withURL(url)
+    this.settings.texture = await Texture.withURL(url)
   }
 
   clone() {
     const clone = new Stream()
-    clone.texture = this.texture
+    clone.settings = this.settings.clone()
     clone.worldMatrix = this.worldMatrix.clone()
     clone.primitives = this.primitives.map((p) => p.clone())
     return clone
