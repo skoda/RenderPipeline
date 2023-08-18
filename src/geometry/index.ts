@@ -1,4 +1,4 @@
 export * from './circle'
-export * from './cube'
+export * from './box'
 export * from './cylinder'
 export * from './sphere'

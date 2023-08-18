@@ -6,6 +6,7 @@ import { Vertex } from './vertex'
 import { Primitive, Stream, VertexPattern } from './geometry/stream'
 import { DepthBuffer } from './depthBuffer'
 import { Texture, TextureAddressingMode } from './texture'
+import { Color } from './color'
 
 enum ClippingFace {
   Front = 0,
@@ -39,17 +40,17 @@ export class PipelineSettings {
 
 export class Pipeline {
   // Transformations and settings
-  view: Matrix
-  worldView: Matrix
-  projection: Matrix
-  screenTransform: Matrix
+  view = Matrix.withIdentity()
+  worldView = Matrix.withIdentity()
+  projection = Matrix.withIdentity()
+  screenTransform = Matrix.withIdentity()
   streams: Stream[] = []
   light?: Light
   shininess = 0
 
-  // Calculated view space positions
-  cameraViewPosition: Vector3
-  lightViewPosition: Vector3
+  // Calculated view space position (or light direction)
+  cameraViewPosition = new Vector3(0, 0, 0)
+  lightViewVector = new Vector3(0, 0, 0)
 
   // Rasterization objects and values
   rasterizer: Rasterizer
@@ -87,13 +88,6 @@ export class Pipeline {
   framerateReadoutId = ''
 
   constructor(renderCanvasId: string) {
-    this.view = Matrix.withIdentity()
-    this.worldView = Matrix.withIdentity()
-    this.projection = Matrix.withIdentity()
-    this.screenTransform = Matrix.withIdentity()
-    this.cameraViewPosition = new Vector3(0, 0, 0)
-    this.lightViewPosition = new Vector3(0, 0, 0)
-
     this.screenTarget = Target.withCanvasElementId(renderCanvasId)
     this.width = this.screenTarget.canvas.width
     this.height = this.screenTarget.canvas.height
@@ -104,7 +98,8 @@ export class Pipeline {
 
     const w = this.width / 2.0
     const h = this.height / 2.0
-    // (-0.5, -0.5) shift, addresses jittery pixels along clipped triangles.
+
+    // (-0.5, -0.5) shift, addresses jittery pixels along top/left from clipped triangles.
     this.screenTransform = Matrix.translationWithXYZ(w - 0.5, h - 0.5, 0).multiplyMatrix(
       Matrix.scaleWithXYZ(w, -h, 1)
     )
@@ -161,25 +156,31 @@ export class Pipeline {
   applySettings(settings: PipelineSettings) {
     this.rasterizer.setTexture(settings.texture)
     Texture.mode = settings.textureMode ?? TextureAddressingMode.Clamp
+    this.light = settings.light ?? this.light
     this.shininess = settings.shininess ?? this.shininess
     this.depthBuffer.skip = settings.ignoreDepth
-    console.log(this.depthBuffer.skip)
   }
 
   draw() {
-    if (this.light) {
+    if (this.light?.illuminatesVertices) {
       const vc = this.view.column(3)
       this.cameraViewPosition = new Vector3(-vc.x, -vc.y, -vc.z)
-      this.lightViewPosition = this.view.multiplyVector(Vector4.withPosition(this.light.pos))
+
+      if (this.light.position) {
+        this.lightViewVector = this.view.multiplyVector(Vector4.withPosition(this.light.position))
+      } else {
+        this.lightViewVector = this.view
+          .multiplyVector(Vector4.withDirection(this.light.direction!))
+          .normalize()
+          .negate()
+        console.log(this.lightViewVector)
+      }
     }
 
-    const defaultShininess = this.shininess // Cache global shininess to reset
+    // Cache global settings to replace when a stream overrides them
+    const defaultShininess = this.shininess
+    const defaultLight = this.light
     this.streams.forEach((stream) => {
-      // if (stream.settings.ignoreDepth) {
-      //   console.log('break')
-      //   debugger
-      // }
-      console.log(stream.settings)
       this.applySettings(stream.settings)
       this.worldView = Matrix.multiply(this.view, stream.worldMatrix)
 
@@ -190,6 +191,7 @@ export class Pipeline {
         this.triangulateClipTargetMapAndRasterize(p)
       })
       this.shininess = defaultShininess
+      this.light = defaultLight
     })
   }
 
@@ -197,22 +199,35 @@ export class Pipeline {
     vert.pos = this.worldView.multiplyVector(Vector4.withPosition(vert.pos))
 
     if (this.light) {
-      vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
-      const vertexToLight = Vector3.subtract(this.lightViewPosition, vert.pos).normalize()
-      const vertexToCamera = Vector3.subtract(this.cameraViewPosition, vert.pos).normalize()
+      let lightDiff = Color.withWhite()
+      let lightSpec = Color.withBlack()
 
-      const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
-      vert.diff.multiply(this.light.diff.clone().scale(intensity).add(this.light.ambt))
-      vert.diff.clamp(1.0)
+      if (this.light.illuminatesVertices) {
+        vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
+        const vertexToLight = this.light.direction
+          ? this.lightViewVector
+          : Vector3.subtract(this.lightViewVector, vert.pos).normalize()
+        const vertexToCamera = Vector3.subtract(this.cameraViewPosition, vert.pos).normalize()
 
-      const betweenLightAndCamera = vertexToLight.add(vertexToCamera).normalize()
-      const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
-      const weirdMakeHighlightLookGoodNonsense =
-        specularIntensity /
-        (this.shininess - this.shininess * specularIntensity + specularIntensity)
+        const intensity = Math.max(0, vertexToLight.dot(vert.nrm))
+        lightDiff = (this.light.diffuse?.clone() ?? lightDiff).scale(intensity)
 
-      vert.spec.multiply(this.light.spec.clone().scale(weirdMakeHighlightLookGoodNonsense))
-      vert.spec.clamp(1.0)
+        if (this.light.specular) {
+          const betweenLightAndCamera = vertexToLight.add(vertexToCamera).normalize()
+          const specularIntensity = Math.max(0, betweenLightAndCamera.dot(vert.nrm))
+          const weirdMakeHighlightLookGoodNonsense =
+            specularIntensity /
+            (this.shininess - this.shininess * specularIntensity + specularIntensity)
+          lightSpec = this.light.specular.clone().scale(weirdMakeHighlightLookGoodNonsense)
+        }
+      }
+
+      vert.diff.multiply(lightDiff)
+      vert.spec.multiply(lightSpec)
+      this.light.ambient && vert.diff.add(this.light.ambient)
+      this.light.emissive && vert.spec.add(this.light.emissive)
+      vert.diff.clamp(1)
+      vert.spec.clamp(1)
     }
 
     vert.pos = this.projection.multiplyVector(Vector4.withPosition(vert.pos))

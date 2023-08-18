@@ -8,7 +8,7 @@ import {
   Camera,
   Circle,
   Color,
-  Cube,
+  Box,
   Cylinder,
   Sphere,
   Texture,
@@ -48,6 +48,7 @@ export default defineComponent({
     )
     let angle = Math.PI / 2
 
+    // Preload textures, they get cached, and some are reused
     await Promise.allSettled([
       Texture.withURL('marble.png'),
       Texture.withURL('earth.png'),
@@ -55,55 +56,59 @@ export default defineComponent({
       Texture.withURL('stars.png')
     ])
 
-    pipeline.light = Light.withPositionAndColors(
-      new Vector3(-10, 15, -7.5),
-      new Color(0.3, 0.2, 0.1),
-      new Color(1, 0.9, 0.8),
-      new Color(0.9, 0.8, 0.6)
-    )
+    pipeline.light = new Light()
+    pipeline.light.setPosition(new Vector3(-10, 15, -7.5))
+    pipeline.light.ambient = new Color(0.3, 0.2, 0.1)
+    pipeline.light.diffuse = new Color(1, 0.9, 0.8)
+    pipeline.light.specular = new Color(0.9, 0.8, 0.6)
+
     pipeline.setDepthPlanes({ near: 0.25, far: 75 })
     pipeline.shininess = 30
     pipeline.framerateReadoutId = 'framerateView'
     pipeline.projection = projection
 
-    const floor = Circle.generate(48, 20, 4, Color.withWhite(), Color.withValue(0.4))
+    const floor = Circle.generate(48, 20, 4, Color.withWhite(), Color.withValue(0))
     floor.loadTexture('flooring.png')
+    const floorLight = pipeline.light.clone()
+    floorLight.setDirection(new Vector3(0, -1, 0))
     floor.worldMatrix = Matrix.rotationWithBasisVectors(
       new Vector3(0, -1, 0),
       new Vector3(0, 0, -1),
       new Vector3(1, 0, 0)
     )
+    console.log(floorLight)
+    floor.settings.light = floorLight
     floor.settings.textureMode = TextureAddressingMode.Wrap
     floor.settings.shininess = 4
 
-    const cube = Cube.generate(1, Color.withWhite(), new Color(0.5, 0.3, 0.1))
+    const cube = Box.generate(1, 1, 1, Color.withWhite(), new Color(0.5, 0.3, 0.1))
     const cubeAxis = new Vector3(1, 4.2, 10)
     cube.loadTexture('marble.png')
 
     const globe = Sphere.generate(24, 0.75)
+    const globeLight = pipeline.light.clone()
+    globeLight.emissive = new Color(0.01, 0.01, 0.1)
     globe.loadTexture('earth.png')
+    globe.settings.light = globeLight
     globe.settings.shininess = 10
-
-    // const background = Sphere.generate(4, 30, Color.withValue(50), Color.withBlack())
-    // background.loadTexture('stars.png')
-    // background.settings.ignoreDepth = true // Must add this to pipeline first
 
     const pillar = Cylinder.generate(24, 0.65, 2)
     pillar.loadTexture('marble.png')
     pillar.worldMatrix = Matrix.translationWithXYZ(0, 1, 0)
 
-    // const pillarBase = Cylinder.generate(4, 1.4, 0.3)
-    // pillarBase.worldMatrix = Matrix.translationWithXYZ(0, 0.15, 0)
-    const pillarBase = Cube.generate(2)
-    pillarBase.worldMatrix = Matrix.translationWithXYZ(0, 0.125, 0).multiplyMatrix(
-      Matrix.scaleWithXYZ(1, 0.125, 1)
-    )
+    const pillarBase = Box.generate(2, 0.25, 2)
+    pillarBase.worldMatrix = Matrix.translationWithXYZ(0, 0.125, 0)
     pillarBase.loadTexture('marble.png')
 
     const lightBall = Sphere.generate(8)
+    // lightBall.settings.light = pipeline.light.clone()
+    // lightBall.settings.light.setDirection(lightBall.settings.light.position)
+    // lightBall.settings.light.emissive = new Color(0.2, 0.08, 0.05)
+    // lightBall.settings.light.ambient = new Color(0.2, 0.18, 0.05)
+    lightBall.worldMatrix = Matrix.translationWithVector(pipeline.light!.position!)
 
     let frameTime = performance.now()
-    const yAxisMovementLock = new Vector3(1, 0, 1) // no flying
+    const yAxisMovementLock = new Vector3(1, 1, 1) // no flying
     pipeline.beginLoop(() => {
       const now = performance.now()
       const perSecond = (now - frameTime) * 0.001
@@ -129,19 +134,7 @@ export default defineComponent({
         Matrix.rotationAroundAxis(new Vector3(0, -1, 0), angle)
       )
 
-      lightBall.worldMatrix = Matrix.translationWithVector(
-        Vector3.add(
-          pipeline.light!.pos,
-          Vector3.subtract(pipeline.light!.pos, camera.position).normalize().scale(2)
-        )
-      )
-
-      // background.worldMatrix = Matrix.translationWithVector(camera.position).multiplyMatrix(
-      //   Matrix.scaleWithXYZ(-1, 1, 1)
-      // )
-
       pipeline.view = camera.viewMatrix()
-      // pipeline.addStream(background)
       // pipeline.addStream(cube)
       pipeline.addStream(floor)
       pipeline.addStream(pillar)
