@@ -159,9 +159,7 @@ export class Pipeline {
     this.light = settings.light ?? this.light
     this.shininess = settings.shininess ?? this.shininess
     this.depthBuffer.skip = settings.ignoreDepth
-  }
 
-  draw() {
     if (this.light?.illuminatesVertices) {
       const vc = this.view.column(3)
       this.cameraViewPosition = new Vector3(-vc.x, -vc.y, -vc.z)
@@ -173,10 +171,11 @@ export class Pipeline {
           .multiplyVector(Vector4.withDirection(this.light.direction!))
           .normalize()
           .negate()
-        console.log(this.lightViewVector)
       }
     }
+  }
 
+  draw() {
     // Cache global settings to replace when a stream overrides them
     const defaultShininess = this.shininess
     const defaultLight = this.light

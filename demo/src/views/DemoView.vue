@@ -53,7 +53,8 @@ export default defineComponent({
       Texture.withURL('marble.png'),
       Texture.withURL('earth.png'),
       Texture.withURL('flooring.png'),
-      Texture.withURL('stars.png')
+      Texture.withURL('sun.png'),
+      Texture.withURL('moon.png')
     ])
 
     pipeline.light = new Light()
@@ -67,7 +68,7 @@ export default defineComponent({
     pipeline.framerateReadoutId = 'framerateView'
     pipeline.projection = projection
 
-    const floor = Circle.generate(48, 20, 4, Color.withWhite(), Color.withValue(0))
+    const floor = Circle.generate(48, 20, 4, Color.withWhite(), Color.withValue(0.5))
     floor.loadTexture('flooring.png')
     const floorLight = pipeline.light.clone()
     floorLight.setDirection(new Vector3(0, -1, 0))
@@ -76,7 +77,6 @@ export default defineComponent({
       new Vector3(0, 0, -1),
       new Vector3(1, 0, 0)
     )
-    console.log(floorLight)
     floor.settings.light = floorLight
     floor.settings.textureMode = TextureAddressingMode.Wrap
     floor.settings.shininess = 4
@@ -85,8 +85,17 @@ export default defineComponent({
     const cubeAxis = new Vector3(1, 4.2, 10)
     cube.loadTexture('marble.png')
 
+    const sun = Sphere.generate(24, 1)
+    const sunLight = new Light()
+    sunLight.ambient = Color.withWhite()
+    sunLight.emissive = new Color(0.95, 0.85, 0.7)
+    sun.loadTexture('sun.png')
+    sun.settings.light = sunLight
+    sun.settings.shininess = 10
+
     const globe = Sphere.generate(24, 0.75)
     const globeLight = pipeline.light.clone()
+    let sunOrbit = 0
     globeLight.emissive = new Color(0.01, 0.01, 0.1)
     globe.loadTexture('earth.png')
     globe.settings.light = globeLight
@@ -101,10 +110,10 @@ export default defineComponent({
     pillarBase.loadTexture('marble.png')
 
     const lightBall = Sphere.generate(8)
-    // lightBall.settings.light = pipeline.light.clone()
-    // lightBall.settings.light.setDirection(lightBall.settings.light.position)
-    // lightBall.settings.light.emissive = new Color(0.2, 0.08, 0.05)
-    // lightBall.settings.light.ambient = new Color(0.2, 0.18, 0.05)
+    lightBall.settings.light = pipeline.light.clone()
+    lightBall.settings.light.setDirection(lightBall.settings.light.position)
+    lightBall.settings.light.emissive = new Color(0.2, 0.08, 0.05)
+    lightBall.settings.light.ambient = new Color(0.2, 0.18, 0.05)
     lightBall.worldMatrix = Matrix.translationWithVector(pipeline.light!.position!)
 
     let frameTime = performance.now()
@@ -124,14 +133,19 @@ export default defineComponent({
       else if (keysDown.has(KeyMap.Right)) camera.turnRight(1 * perSecond)
 
       angle = (angle + 3.125 * perSecond) % (Math.PI * 2)
+      sunOrbit = (sunOrbit + .125 * perSecond) % (Math.PI * 2)
 
       cube.worldMatrix = Matrix.multiply(
         Matrix.translationWithXYZ(0, 3.25, 0),
         Matrix.rotationAroundAxis(cubeAxis, angle)
       )
 
-      globe.worldMatrix = Matrix.translationWithXYZ(0, 3.25, 0).multiplyMatrix(
-        Matrix.rotationAroundAxis(new Vector3(0, -1, 0), angle)
+      globe.worldMatrix = Matrix.rotationAroundAxis(new Vector3(0, -1, 0), sunOrbit)
+        .multiplyMatrix(Matrix.translationWithXYZ(7, 3.25, 0)
+          .multiplyMatrix(Matrix.rotationAroundAxis(new Vector3(0, -1, 0.2), angle)))
+
+      sun.worldMatrix = Matrix.translationWithXYZ(0, 3.25, 0).multiplyMatrix(
+        Matrix.rotationAroundAxis(new Vector3(0,1,0), angle * 2)
       )
 
       pipeline.view = camera.viewMatrix()
@@ -141,6 +155,7 @@ export default defineComponent({
       pipeline.addStream(pillarBase)
       pipeline.addStream(globe)
       pipeline.addStream(lightBall)
+      pipeline.addStream(sun)
       frameTime = now
     }, true)
   }
