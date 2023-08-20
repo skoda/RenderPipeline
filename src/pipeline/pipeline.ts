@@ -1,12 +1,15 @@
+import { Primitive, Stream, VertexPattern } from '../geometry'
+import { Matrix, Vector3, Vector4 } from '../math'
+import {
+  Color,
+  DepthBuffer,
+  Rasterizer,
+  Target,
+  Texture,
+  TextureAddressingMode,
+  Vertex
+} from '../rasterization'
 import { Light } from './light'
-import Rasterizer from './rasterizer'
-import Target from './target'
-import { Matrix, Vector3, Vector4 } from './math'
-import { Vertex } from './vertex'
-import { Primitive, Stream, VertexPattern } from './geometry/stream'
-import { DepthBuffer } from './depthBuffer'
-import { Texture, TextureAddressingMode } from './texture'
-import { Color } from './color'
 
 enum ClippingFace {
   Front = 0,

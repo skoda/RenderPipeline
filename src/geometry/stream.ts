@@ -1,7 +1,6 @@
 import { Matrix } from '../math'
 import { PipelineSettings } from '../pipeline'
-import { Texture } from '../texture'
-import { Vertex } from '../vertex'
+import { Texture, Vertex } from '../rasterization'
 
 export enum VertexPattern {
   List,

@@ -1,7 +1,5 @@
-import { Color } from '../color'
-import { TextureCoord } from '../texture'
 import { Vector3 } from '../math'
-import { Vertex } from '../vertex'
+import { Color, TextureCoord, Vertex } from '../rasterization'
 import { Stream, Primitive, VertexPattern } from './stream'
 
 export class Sphere {
@@ -23,7 +21,7 @@ export class Sphere {
       const cosLongB = Math.cos(longB)
       const sinLongB = Math.sin(longB)
       const poleTexU = (i + 0.5) / longitude
-      const verts = []
+      const verts: Vertex[] = []
 
       // North pole
       verts.push(

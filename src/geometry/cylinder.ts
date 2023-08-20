@@ -1,7 +1,5 @@
-import { Color } from '../color'
 import { Vector3 } from '../math'
-import { TextureCoord } from '../texture'
-import { Vertex } from '../vertex'
+import { Color, TextureCoord, Vertex } from '../rasterization'
 import { Primitive, Stream, VertexPattern } from './stream'
 
 export class Cylinder {

@@ -1,6 +1,6 @@
+import { Vector3 } from '../math'
 import { Color } from './color'
 import { TextureCoord } from './texture'
-import { Vector3 } from './math'
 
 export class Vertex {
   pos: Vector3

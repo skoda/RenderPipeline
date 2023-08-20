@@ -1,10 +1,10 @@
+import { Vector2, Vector3 } from '../math'
 import { Color } from './color'
-import { Texture, TextureCoord } from './texture'
-import { Vector2, Vector3 } from './math'
-import { Vertex } from './vertex'
 import { DepthBuffer } from './depthBuffer'
+import { Texture, TextureCoord } from './texture'
+import { Vertex } from './vertex'
 
-export default class Rasterizer {
+export class Rasterizer {
   buffer: Uint8ClampedArray
   depthBuffer: DepthBuffer
   width: number

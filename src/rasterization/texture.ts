@@ -1,4 +1,4 @@
-import { clamp } from './math'
+import { clamp } from '../math'
 import { Color } from './color'
 
 export enum TextureAddressingMode {

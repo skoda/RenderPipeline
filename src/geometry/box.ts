@@ -1,7 +1,5 @@
-import { Color } from '../color'
-import { TextureCoord } from '../texture'
 import { Vector3 } from '../math'
-import { Vertex } from '../vertex'
+import { Color, TextureCoord, Vertex } from '../rasterization'
 import { Stream, Primitive, VertexPattern } from './stream'
 
 export class Box {
