@@ -4,8 +4,8 @@ export const Textures = {
   marble: 'img/marble.png',
   earth: 'img/earth.png',
   flooring: 'img/flooring.png',
-  sun: '/img/sun.png',
-  moon: '/img/moon.png',
+  sun: 'img/sun.png',
+  moon: 'img/moon.png',
 
   preloadAll: () => {
     return Promise.allSettled([
