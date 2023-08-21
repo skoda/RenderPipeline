@@ -12,6 +12,31 @@ export class Light {
   ambient?: Color
   emissive?: Color
 
+  static withOptions({
+    pos,
+    dir,
+    diff,
+    spec,
+    ambt,
+    emsv
+  }: {
+    pos?: Vector3
+    dir?: Vector3
+    diff?: Color
+    spec?: Color
+    ambt?: Color
+    emsv?: Color
+  }) {
+    const out = new Light()
+    out.setDirection(dir)
+    out.setPosition(pos)
+    out.diffuse = diff
+    out.specular = spec
+    out.ambient = ambt
+    out.emissive = emsv
+    return out
+  }
+
   get illuminatesVertices() {
     return (this.#position || this.#direction) && (this.diffuse || this.specular)
   }

@@ -1,4 +1,4 @@
-import { Texture } from '../lib/render-pipeline'
+import { Texture } from '../lib/render-pipeline/index.js'
 
 export const Textures = {
   marble: 'img/marble.png',

@@ -4,13 +4,20 @@ import { DepthBuffer } from './depthBuffer'
 import { Texture, TextureCoord } from './texture'
 import { Vertex } from './vertex'
 
+const enum TriangleOutput {
+  Triangles = 1 << 0,
+  Wireframes = 1 << 1,
+  Both = TriangleOutput.Triangles | TriangleOutput.Wireframes
+}
+
 export class Rasterizer {
   buffer: Uint8ClampedArray
   depthBuffer: DepthBuffer
   width: number
   height: number
   texture?: Texture
-  curIdx: number
+  curIdx = 0
+  triangleOutput = TriangleOutput.Triangles
 
   constructor(frameBuffer: ImageData, depthBuffer: DepthBuffer) {
     const { data: buffer, width, height } = frameBuffer
@@ -18,7 +25,6 @@ export class Rasterizer {
     this.depthBuffer = depthBuffer
     this.width = width
     this.height = height
-    this.curIdx = 0
   }
 
   setFrameBuffer(frameBuffer: ImageData) {
@@ -127,120 +133,129 @@ export class Rasterizer {
   }
 
   triangleDraw(vtx: Vertex[]) {
-    const left = vtx[0].clone() // Current left edge vertex
-    const right = vtx[0].clone() // Current right edge vertex
-    const mMid = vtx[0].clone() // rate of change top triangle half
-    const mBot = vtx[0].clone() // rate of change bottom triangle half
+    if (this.triangleOutput & TriangleOutput.Triangles) {
+      const left = vtx[0].clone() // Current left edge vertex
+      const right = vtx[0].clone() // Current right edge vertex
+      const mMid = vtx[0].clone() // rate of change top triangle half
+      const mBot = vtx[0].clone() // rate of change bottom triangle half
 
-    //Order Vertex Indices
-    const topIdx = [0, 1, 2].reduce((a, c) => (vtx[a].pos.y < vtx[c].pos.y ? a : c))
-    const botIdx = [0, 1, 2].reduce((a, c) => (vtx[a].pos.y > vtx[c].pos.y ? a : c))
-    const top = vtx[topIdx]
-    const bot = vtx[botIdx]
-    const mid = vtx[3 - (topIdx + botIdx)]
+      //Order Vertex Indices
+      const topIdx = [0, 1, 2].reduce((a, c) => (vtx[a].pos.y < vtx[c].pos.y ? a : c))
+      const botIdx = [0, 1, 2].reduce((a, c) => (vtx[a].pos.y > vtx[c].pos.y ? a : c))
+      const top = vtx[topIdx]
+      const bot = vtx[botIdx]
+      const mid = vtx[3 - (topIdx + botIdx)]
 
-    //Setup Left/Right Vertex Indices
-    let ml: Vertex //
-    let mr: Vertex
-    let mp: Vertex
-    if (
-      (top.pos.y - mid.pos.y) * (bot.pos.x - top.pos.x) +
-        (mid.pos.x - top.pos.x) * (bot.pos.y - top.pos.y) <
-      0
-    ) {
-      // Left edge goes from Top to Mid, Right edge from Top to Bot
-      ml = mMid
-      mr = mBot
-      mp = left
-    } else {
-      // Left edge goes from Top to Bot, Right edge from Top to Mid
-      ml = mBot
-      mr = mMid
-      mp = right
-    }
-    /////////////////////////////////
-
-    //Setup Interpolation Values
-    let y = Math.ceil(top.pos.y)
-    let offset = y - top.pos.y
-    const yMid = Math.ceil(mid.pos.y) - 1
-    const yEnd = Math.ceil(bot.pos.y) - 1
-    const invMidHeight = 1 / (mid.pos.y - top.pos.y)
-    let invHeight = 1 / (bot.pos.y - top.pos.y)
-
-    mMid.pos = Vector3.subtract(mid.pos, top.pos).scale(invMidHeight)
-    mBot.pos = Vector3.subtract(bot.pos, top.pos).scale(invHeight)
-
-    if (this.texture) {
-      const txSize = new TextureCoord(this.texture.width, this.texture.height)
-      top.tex.multiply(txSize)
-      mid.tex.multiply(txSize)
-      bot.tex.multiply(txSize)
-      mMid.tex = TextureCoord.subtract(mid.tex, top.tex).scale(invMidHeight)
-      mBot.tex = TextureCoord.subtract(bot.tex, top.tex).scale(invHeight)
-      left.tex = ml.tex.clone().scale(offset).add(top.tex)
-      right.tex = mr.tex.clone().scale(offset).add(top.tex)
-    }
-
-    mMid.diff = Color.subtract(mid.diff, top.diff).scale(invMidHeight)
-    mMid.spec = Color.subtract(mid.spec, top.spec).scale(invMidHeight)
-    mBot.diff = Color.subtract(bot.diff, top.diff).scale(invHeight)
-    mBot.spec = Color.subtract(bot.spec, top.spec).scale(invHeight)
-    /////////////////////////////////
-
-    //Initialize edge vertices
-    left.pos = ml.pos.clone().scale(offset).add(top.pos)
-    left.diff = ml.diff.clone().scale(offset).add(top.diff)
-    left.spec = ml.spec.clone().scale(offset).add(top.spec)
-
-    right.pos = mr.pos.clone().scale(offset).add(top.pos)
-    right.diff = mr.diff.clone().scale(offset).add(top.diff)
-    right.spec = mr.spec.clone().scale(offset).add(top.spec)
-    /////////////////////////////////
-
-    let yStop = yMid
-    for (let i = 0; i < 2; ++i) {
-      //Draw Triangle Half
-      while (y <= yStop) {
-        if (y >= 0 && y < this.height) this.scanlineDraw(y, left, right)
-
-        left.pos.add(ml.pos)
-        right.pos.add(mr.pos)
-        left.diff.add(ml.diff)
-        right.diff.add(mr.diff)
-        left.spec.add(ml.spec)
-        right.spec.add(mr.spec)
-        if (this.texture) {
-          left.tex.add(ml.tex)
-          right.tex.add(mr.tex)
-        }
-
-        ++y
+      //Setup Left/Right Vertex Indices
+      let ml: Vertex //
+      let mr: Vertex
+      let mp: Vertex
+      if (
+        (top.pos.y - mid.pos.y) * (bot.pos.x - top.pos.x) +
+          (mid.pos.x - top.pos.x) * (bot.pos.y - top.pos.y) <
+        0
+      ) {
+        // Left edge goes from Top to Mid, Right edge from Top to Bot
+        ml = mMid
+        mr = mBot
+        mp = left
+      } else {
+        // Left edge goes from Top to Bot, Right edge from Top to Mid
+        ml = mBot
+        mr = mMid
+        mp = right
       }
       /////////////////////////////////
 
-      if (i == 0) {
-        yStop = yEnd
+      //Setup Interpolation Values
+      let y = Math.ceil(top.pos.y)
+      let offset = y - top.pos.y
+      const yMid = Math.ceil(mid.pos.y) - 1
+      const yEnd = Math.ceil(bot.pos.y) - 1
+      const invMidHeight = 1 / (mid.pos.y - top.pos.y)
+      let invHeight = 1 / (bot.pos.y - top.pos.y)
 
-        //Reset Interpolation Values
-        invHeight = 1 / (bot.pos.y - mid.pos.y)
-        mMid.pos = Vector3.subtract(bot.pos, mid.pos).scale(invHeight)
-        mMid.tex = TextureCoord.subtract(bot.tex, mid.tex).scale(invHeight)
-        mMid.diff = Color.subtract(bot.diff, mid.diff).scale(invHeight)
-        mMid.spec = Color.subtract(bot.spec, mid.spec).scale(invHeight)
-        /////////////////////////////////
+      mMid.pos = Vector3.subtract(mid.pos, top.pos).scale(invMidHeight)
+      mBot.pos = Vector3.subtract(bot.pos, top.pos).scale(invHeight)
 
-        //Reset Middle Vertex
-        offset = y - mid.pos.y
-        mp.pos = mMid.pos.clone().scale(offset).add(mid.pos)
-        mp.diff = mMid.diff.clone().scale(offset).add(mid.diff)
-        mp.spec = mMid.spec.clone().scale(offset).add(mid.spec)
+      if (this.texture) {
+        const txSize = new TextureCoord(this.texture.width, this.texture.height)
+        top.tex.multiply(txSize)
+        mid.tex.multiply(txSize)
+        bot.tex.multiply(txSize)
+        mMid.tex = TextureCoord.subtract(mid.tex, top.tex).scale(invMidHeight)
+        mBot.tex = TextureCoord.subtract(bot.tex, top.tex).scale(invHeight)
+        left.tex = ml.tex.clone().scale(offset).add(top.tex)
+        right.tex = mr.tex.clone().scale(offset).add(top.tex)
+      }
 
-        if (this.texture) {
-          mp.tex = mMid.tex.clone().scale(offset).add(mid.tex)
+      mMid.diff = Color.subtract(mid.diff, top.diff).scale(invMidHeight)
+      mMid.spec = Color.subtract(mid.spec, top.spec).scale(invMidHeight)
+      mBot.diff = Color.subtract(bot.diff, top.diff).scale(invHeight)
+      mBot.spec = Color.subtract(bot.spec, top.spec).scale(invHeight)
+      /////////////////////////////////
+
+      //Initialize edge vertices
+      left.pos = ml.pos.clone().scale(offset).add(top.pos)
+      left.diff = ml.diff.clone().scale(offset).add(top.diff)
+      left.spec = ml.spec.clone().scale(offset).add(top.spec)
+
+      right.pos = mr.pos.clone().scale(offset).add(top.pos)
+      right.diff = mr.diff.clone().scale(offset).add(top.diff)
+      right.spec = mr.spec.clone().scale(offset).add(top.spec)
+      /////////////////////////////////
+
+      let yStop = yMid
+      for (let i = 0; i < 2; ++i) {
+        //Draw Triangle Half
+        while (y <= yStop) {
+          if (y >= 0 && y < this.height) this.scanlineDraw(y, left, right)
+
+          left.pos.add(ml.pos)
+          right.pos.add(mr.pos)
+          left.diff.add(ml.diff)
+          right.diff.add(mr.diff)
+          left.spec.add(ml.spec)
+          right.spec.add(mr.spec)
+          if (this.texture) {
+            left.tex.add(ml.tex)
+            right.tex.add(mr.tex)
+          }
+
+          ++y
         }
         /////////////////////////////////
+
+        if (i == 0) {
+          yStop = yEnd
+
+          //Reset Interpolation Values
+          invHeight = 1 / (bot.pos.y - mid.pos.y)
+          mMid.pos = Vector3.subtract(bot.pos, mid.pos).scale(invHeight)
+          mMid.tex = TextureCoord.subtract(bot.tex, mid.tex).scale(invHeight)
+          mMid.diff = Color.subtract(bot.diff, mid.diff).scale(invHeight)
+          mMid.spec = Color.subtract(bot.spec, mid.spec).scale(invHeight)
+          /////////////////////////////////
+
+          //Reset Middle Vertex
+          offset = y - mid.pos.y
+          mp.pos = mMid.pos.clone().scale(offset).add(mid.pos)
+          mp.diff = mMid.diff.clone().scale(offset).add(mid.diff)
+          mp.spec = mMid.spec.clone().scale(offset).add(mid.spec)
+
+          if (this.texture) {
+            mp.tex = mMid.tex.clone().scale(offset).add(mid.tex)
+          }
+          /////////////////////////////////
+        }
       }
+    }
+
+    if (this.triangleOutput & TriangleOutput.Wireframes) {
+      const [v1, v2, v3] = vtx.map((v) => new Vector2(v.pos.x, v.pos.y))
+      this.lineDraw(v1, v2)
+      this.lineDraw(v2, v3)
+      this.lineDraw(v3, v2)
     }
   }
 }

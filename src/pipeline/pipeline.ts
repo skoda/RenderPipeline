@@ -30,6 +30,24 @@ export class PipelineSettings {
   light?: Light
   shininess?: number
 
+  // Always set texture with Stream.loadTexture
+  apply({
+    textureMode,
+    ignoreDepth,
+    light,
+    shininess
+  }: {
+    textureMode?: TextureAddressingMode
+    ignoreDepth?: boolean
+    light?: Light
+    shininess?: number
+  }) {
+    this.textureMode = textureMode ?? this.textureMode
+    this.ignoreDepth = ignoreDepth ?? this.ignoreDepth
+    this.light = light ?? this.light
+    this.shininess = shininess ?? this.shininess
+  }
+
   clone() {
     const clone = new PipelineSettings()
     clone.texture = this.texture
