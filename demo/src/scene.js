@@ -9,15 +9,7 @@ import {
   TextureAddressingMode,
   Vector3
 } from '../lib/render-pipeline/index.js'
-import {
-  ABMIENT_LIGHT_DEFAULT,
-  DIFFUSE_LIGHT_DEFAULT,
-  DOWN_VEC,
-  FLOOR_RADIUS,
-  SPECULAR_LIGHT_DEFAULT,
-  SUN_LIGHT,
-  SUN_POSITION
-} from './consts.js'
+import { DOWN_VEC, FLOOR_RADIUS, SUN_LIGHT, SUN_POSITION } from './consts.js'
 import { Textures } from './textures.js'
 
 class Object {
@@ -50,13 +42,7 @@ export const Scene = {
     Object.create(Circle.generate(48, FLOOR_RADIUS, 4, Color.withWhite(), Color.withValue(0.5)), {
       texture: Textures.flooring,
       textureMode: TextureAddressingMode.Wrap,
-      light: Light.withOptions({
-        dir: new Vector3(0, -1, 0),
-        ambt: ABMIENT_LIGHT_DEFAULT,
-        diff: DIFFUSE_LIGHT_DEFAULT,
-        spec: SPECULAR_LIGHT_DEFAULT
-      }),
-      shininess: 4,
+      shininess: 2,
       worldMatrix: Matrix.rotationWithBasisVectors(
         new Vector3(0, -1, 0),
         new Vector3(0, 0, -1),
@@ -65,7 +51,7 @@ export const Scene = {
     })
 
     // Central pillar
-    Object.create(Cylinder.generate(200, 0.65, 2), {
+    Object.create(Cylinder.generate(60, 0.65, 2), {
       texture: Textures.marble,
       worldMatrix: Matrix.translationWithXYZ(0, 1, 0)
     })
@@ -111,10 +97,10 @@ export const Scene = {
     })
 
     // Moon
-    Object.create(Sphere.generate(16, 0.2), {
+    Object.create(Sphere.generate(16, 0.2, Color.withWhite(), Color.withValue(0.4)), {
       texture: Textures.moon,
       light: SUN_LIGHT,
-      shininess: 15,
+      shininess: 10,
       animate: ({ runTime }) => {
         const orbitAngle = (runTime * 0.0015) % (Math.PI * 2)
         const orbitRotation = Matrix.rotationAroundAxis(DOWN_VEC, orbitAngle)

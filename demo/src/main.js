@@ -12,7 +12,7 @@ import { Scene } from './scene.js'
 import { Textures } from './textures.js'
 
 const initialize = async () => {
-  const pipeline = new Pipeline('canvasId')
+  const pipeline = new Pipeline('screenbuffer')
   const camera = new Camera(
     new Vector3(0, 0, 1),
     new Vector3(0, 1, 0),
@@ -26,7 +26,8 @@ const initialize = async () => {
   // Default light, slightly offset to light
   // non-celestial objects in the scene
   pipeline.light = Light.withOptions({
-    pos: new Vector3(-10, 15, -7.5),
+    // pos: new Vector3(-10, 15, -7.5),
+    dir: new Vector3(10, -15, 7.5),
     ambt: ABMIENT_LIGHT_DEFAULT,
     diff: DIFFUSE_LIGHT_DEFAULT,
     spec: SPECULAR_LIGHT_DEFAULT
@@ -59,4 +60,10 @@ const initialize = async () => {
   }, true)
 }
 
-initialize()
+if (document.location.search === '?about') {
+  const about = document.querySelector('template#about')
+  const content = document.querySelector('section#content')
+  content.replaceChildren(about.content.cloneNode(true))
+} else {
+  initialize()
+}

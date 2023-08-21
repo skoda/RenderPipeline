@@ -1,18 +1,70 @@
-<!DOCTYPE html>
-<html lang="en-US">
+<!doctype html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="css/main.css" />
+
     <title>Render Pipeline Demo</title>
   </head>
   <body>
-    <div class="demo">
-      <h2>Demo</h2>
-      <br />
-      <div>
-        <canvas id="canvasId" width="640" height="360"></canvas>
-        <div id="framerateView"></div>
+    <header>
+      <div id="logo">📦</div>
+      <div class="wrapper">
+        <h1>Render Pipeline</h1>
+        <h3>
+          A 3D rendering pipeline running entirely in software. Written in Typescript by
+          <a href="https://github.com/skoda">@skoda</a>, modified from my own graphics coursework at
+          <a href="https://www.digipen.edu">DigiPen</a>.
+        </h3>
+        <nav>
+          <a href="/">Demo</a>
+          <a href="/?about" class="">About</a>
+        </nav>
       </div>
-    </div>
+    </header>
+    <section id="content">
+      <div id="demo">
+        <h2>Demo</h2>
+        <br />
+        <div>
+          <canvas id="screenbuffer" width="640" height="360"></canvas>
+          <div id="framerateView">&nbsp;</div>
+        </div>
+      </div>
+    </section>
+    <template id="about">
+      <ul>
+        <li>
+          <h3>What?</h3>
+          A software renderer.
+        </li>
+        <li>
+          <h3>When?</h3>
+          School Projects around 2004.
+        </li>
+        <li>
+          <h3>Where?</h3>
+          DigiPen, on my website, now on Github.
+        </li>
+        <li>
+          <h3>Why?</h3>
+          I don't have a good answer for you. It's fun, and hopefully someone will learn something
+          about 3D graphics with this.
+        </li>
+        <li>
+          <h3>How?</h3>
+          Most of my learnings on graphics is dated, but much of it was from classes at DigiPen.
+          Real-Time Rendering was a huge contributor to understanding this stuff.
+        </li>
+        <li>
+          <h3>Who?</h3>
+          Chuck Skoda, a.k.a. @skoda on Github, Mastodon, and Threads.
+        </li>
+      </ul>
+    </template>
     <script type="module" src="src/main.js"></script>
   </body>
 </html>

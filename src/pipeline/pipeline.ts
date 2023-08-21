@@ -225,7 +225,7 @@ export class Pipeline {
       if (this.light.illuminatesVertices) {
         vert.nrm = this.worldView.multiplyVector(Vector4.withDirection(vert.nrm)).normalize()
         const vertexToLight = this.light.direction
-          ? this.lightViewVector
+          ? this.lightViewVector.clone()
           : Vector3.subtract(this.lightViewVector, vert.pos).normalize()
         const vertexToCamera = Vector3.subtract(this.cameraViewPosition, vert.pos).normalize()
 

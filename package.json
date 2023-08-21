@@ -10,7 +10,6 @@
   ],
   "scripts": {
     "build": "npm run build:source && npm run build:definitions",
-    "watch": "tsc --watch",
     "build:source": "esbuild src/index.ts --sourcemap --bundle --platform=node --keep-names --format=esm --outdir=dist",
     "build:definitions": "tsc --emitDeclarationOnly",
     "demo": "http-server ./demo -p 4242 -d false -c-1",
