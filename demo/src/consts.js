@@ -1,5 +1,7 @@
 import { Color, Light, Vector3 } from '../lib/render-pipeline/index.js'
 
+export const CANVAS_ID = 'screenbuffer'
+export const FRAMERATE_ID = 'framerateView'
 export const UP_VEC = new Vector3(0, 1, 0)
 export const DOWN_VEC = new Vector3(0, -1, 0)
 export const FLOOR_RADIUS = 20

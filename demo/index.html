@@ -20,8 +20,8 @@
           <a href="https://www.digipen.edu">DigiPen</a>.
         </h3>
         <nav>
-          <a href="/">Demo</a>
-          <a href="/?about" class="">About</a>
+          <a href="./">Demo</a>
+          <a href="./?about" class="">About</a>
         </nav>
       </div>
     </header>
@@ -30,8 +30,12 @@
         <h2>Demo</h2>
         <br />
         <div>
-          <canvas id="screenbuffer" width="640" height="360"></canvas>
-          <div id="framerateView">&nbsp;</div>
+          <canvas id="screenbuffer" title="click to look around" width="640" height="360"></canvas>
+          <div id="info">
+            <div>W-A-S-D move</div>
+            <div>↑↓←→ look (or click above)</div>
+            <div id="framerateView">&nbsp;</div>
+          </div>
         </div>
       </div>
     </section>

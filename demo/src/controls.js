@@ -1,5 +1,5 @@
 import { Vector2, Vector3 } from '../lib/render-pipeline/index.js'
-import { FLOOR_RADIUS } from './consts.js'
+import { CANVAS_ID, FLOOR_RADIUS } from './consts.js'
 
 const KeyMap = {
   W: 'KeyW',
@@ -20,8 +20,25 @@ export const Controls = {
   init: (camera) => {
     cam = camera
 
+    // Setup keyed movement WASD to move and ↑↓←→ to look
     window.addEventListener('keydown', (e) => keysDown.add(e.code))
     window.addEventListener('keyup', (e) => keysDown.delete(e.code))
+
+    // Setup looking with mouse movement
+    const canvas = document.getElementById(CANVAS_ID)
+    canvas.addEventListener('click', async () => {
+      await canvas.requestPointerLock({ unadjustedMovement: true })
+    })
+    document.addEventListener('pointerlockchange', () => {
+      const addOrRemove =
+        document.pointerLockElement === canvas ? 'addEventListener' : 'removeEventListener'
+      document[addOrRemove]('mousemove', Controls.mouseMovement, false)
+    })
+  },
+
+  mouseMovement: (e) => {
+    cam.pitchDown(e.movementY / 500)
+    cam.turnRight(e.movementX / 800)
   },
 
   inputTest: (perSecond, noFlying = true) => {

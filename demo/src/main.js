@@ -1,9 +1,11 @@
 import { Pipeline, Matrix, Vector3, Light, Camera } from '../lib/render-pipeline/index.js'
 import {
   ABMIENT_LIGHT_DEFAULT,
+  CANVAS_ID,
   DIFFUSE_LIGHT_DEFAULT,
   EYE_HEIGHT,
   FAR_PLANE,
+  FRAMERATE_ID,
   NEAR_PLANE,
   SPECULAR_LIGHT_DEFAULT
 } from './consts.js'
@@ -12,7 +14,7 @@ import { Scene } from './scene.js'
 import { Textures } from './textures.js'
 
 const initialize = async () => {
-  const pipeline = new Pipeline('screenbuffer')
+  const pipeline = new Pipeline(CANVAS_ID)
   const camera = new Camera(
     new Vector3(0, 0, 1),
     new Vector3(0, 1, 0),
@@ -26,7 +28,6 @@ const initialize = async () => {
   // Default light, slightly offset to light
   // non-celestial objects in the scene
   pipeline.light = Light.withOptions({
-    // pos: new Vector3(-10, 15, -7.5),
     dir: new Vector3(10, -15, 7.5),
     ambt: ABMIENT_LIGHT_DEFAULT,
     diff: DIFFUSE_LIGHT_DEFAULT,
@@ -36,7 +37,7 @@ const initialize = async () => {
   // Setup pipeline defaults and render settings
   pipeline.setDepthPlanes({ near: NEAR_PLANE, far: FAR_PLANE })
   pipeline.shininess = 30
-  pipeline.framerateReadoutId = 'framerateView'
+  pipeline.framerateReadoutId = FRAMERATE_ID
   pipeline.projection = Matrix.projectionWithViewportAndFieldOfView(
     pipeline.width,
     pipeline.height,
