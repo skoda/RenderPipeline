@@ -1,5 +1,5 @@
-import { Primitive, Stream, VertexPattern } from '../geometry'
-import { Matrix, Vector3, Vector4 } from '../math'
+import { Primitive, Stream, VertexPattern } from '../geometry/index.js'
+import { Matrix, Vector3, Vector4 } from '../math/index.js'
 import {
   Color,
   DepthBuffer,
@@ -8,8 +8,8 @@ import {
   Texture,
   TextureAddressingMode,
   Vertex
-} from '../rasterization'
-import { Light } from './light'
+} from '../rasterization/index.js'
+import { Light } from './light.js'
 
 enum ClippingFace {
   Front = 0,

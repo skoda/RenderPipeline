@@ -1,3 +1,3 @@
-export * from './camera'
-export * from './light'
-export * from './pipeline'
+export * from './camera.js'
+export * from './light.js'
+export * from './pipeline.js'

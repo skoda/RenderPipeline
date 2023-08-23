@@ -1,8 +1,8 @@
-import { Vector2, Vector3 } from '../math'
-import { Color } from './color'
-import { DepthBuffer } from './depthBuffer'
-import { Texture, TextureCoord } from './texture'
-import { Vertex } from './vertex'
+import { Vector2, Vector3 } from '../math/index.js'
+import { Color } from './color.js'
+import { DepthBuffer } from './depthBuffer.js'
+import { Texture, TextureCoord } from './texture.js'
+import { Vertex } from './vertex.js'
 
 const enum TriangleOutput {
   Triangles = 1 << 0,

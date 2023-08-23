@@ -1,4 +1,4 @@
-import { Matrix, Vector3, Vector4, clamp } from '../math'
+import { Matrix, Vector3, Vector4, clamp } from '../math/index.js'
 
 export class Camera {
   ahead: Vector3

@@ -1,4 +1,4 @@
-import { clamp } from '../math'
+import { clamp } from '../math/index.js'
 
 export class Color {
   r: number

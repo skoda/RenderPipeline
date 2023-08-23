@@ -1,5 +1,5 @@
-import { Vector3 } from './vector3'
-import { Vector4 } from './vector4'
+import { Vector3 } from './vector3.js'
+import { Vector4 } from './vector4.js'
 
 type MatrixColumnIndex = 0 | 1 | 2 | 3
 

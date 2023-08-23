@@ -1,4 +1,4 @@
-import { Vector3 } from '../src/math'
+import { Vector3 } from '../../src/math'
 
 test('Vector3 constructors', () => {
   const vec3 = new Vector3(4, 2, 0)
@@ -45,4 +45,41 @@ test('Vector3 dot product', () => {
   expect(v1.dot(v3)).toBe(15)
   expect(v4.dot(v5)).toBe(37)
   expect(v4.dot(v5)).toBe(37)
+})
+
+test('Vector3 scaling', () => {
+  const vector = new Vector3(2, 3, 4)
+  const scaledVector = vector.clone().scale(2)
+  expect(Object.values(scaledVector)).toStrictEqual([4, 6, 8])
+})
+
+test('Vector3 negation', () => {
+  const vector = new Vector3(2, -3, 4)
+  const negatedVector = vector.clone().negate()
+  expect(Object.values(negatedVector)).toStrictEqual([-2, 3, -4])
+})
+
+test('Vector3 cross product', () => {
+  const v1 = new Vector3(1, 0, 0)
+  const v2 = new Vector3(0, 1, 0)
+  const crossProduct = Vector3.cross(v1, v2)
+  expect(Object.values(crossProduct)).toStrictEqual([0, 0, 1])
+})
+
+test('Vector3 clamping', () => {
+  const vector = new Vector3(5, -3, 10)
+  const clampedVector = vector.clone().clamp(5, 0)
+  expect(Object.values(clampedVector)).toStrictEqual([5, 0, 5])
+})
+
+test('Vector3 magnitude and magnitudeSquared', () => {
+  const vector = new Vector3(3, 4, 0)
+  expect(vector.magnitudeSquared).toBe(25)
+  expect(vector.magnitude).toBe(5)
+})
+
+test('Vector3 normalization', () => {
+  const vector = new Vector3(3, -1, 4)
+  const normalizedVector = vector.clone().normalize()
+  expect(normalizedVector.magnitude).toStrictEqual(1)
 })

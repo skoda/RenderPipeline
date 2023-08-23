@@ -1,5 +1,5 @@
-import { clamp } from '../math'
-import { Color } from './color'
+import { clamp } from '../math/index.js'
+import { Color } from './color.js'
 
 export enum TextureAddressingMode {
   Clamp,

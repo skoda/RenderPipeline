@@ -1,5 +1,5 @@
-import { clamp } from './clamp'
-import { Vector3 } from './vector3'
+import { clamp } from './clamp.js'
+import { Vector3 } from './vector3.js'
 
 export class Vector4 {
   x: number

@@ -1,6 +1,6 @@
-import { Vector3 } from '../math'
-import { Color, TextureCoord, Vertex } from '../rasterization'
-import { Stream, Primitive, VertexPattern } from './stream'
+import { Vector3 } from '../math/index.js'
+import { Color, TextureCoord, Vertex } from '../rasterization/index.js'
+import { Stream, Primitive, VertexPattern } from './stream.js'
 
 export class Circle {
   static generate(

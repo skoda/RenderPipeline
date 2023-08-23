@@ -1,6 +1,6 @@
-import { Matrix } from '../math'
-import { PipelineSettings } from '../pipeline'
-import { Texture, Vertex } from '../rasterization'
+import { Matrix } from '../math/index.js'
+import { PipelineSettings } from '../pipeline/index.js'
+import { Texture, Vertex } from '../rasterization/index.js'
 
 export enum VertexPattern {
   List,

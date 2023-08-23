@@ -1,4 +1,4 @@
-import { clamp } from './clamp'
+import { clamp } from './clamp.js'
 
 export class Vector2 {
   x: number

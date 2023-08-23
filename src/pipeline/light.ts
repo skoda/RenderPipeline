@@ -1,5 +1,5 @@
-import { Vector3 } from '../math'
-import { Color } from '../rasterization'
+import { Vector3 } from '../math/index.js'
+import { Color } from '../rasterization/index.js'
 
 // Light in the 3d scene
 // If it doesn't have position or direction, only ambient and emissive terms
