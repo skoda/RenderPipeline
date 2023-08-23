@@ -1,11 +1,17 @@
 @import './base.css';
 
+
 body {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
 
   font-weight: normal;
+}
+
+section {
+  max-height: 100%;
+  overflow: hidden;
 }
 
 a,
@@ -77,6 +83,8 @@ h3 {
 
 ul {
   list-style-type: none;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 li {
