@@ -1,17 +1,14 @@
 @import './base.css';
 
+html, body {
+  height: 100%;
+}
 
 body {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-
   font-weight: normal;
-}
-
-section {
-  max-height: 100%;
-  overflow: hidden;
 }
 
 a,
@@ -56,11 +53,11 @@ nav {
   margin-top: 2rem;
 }
 
-nav a.router-link-exact-active {
+nav a.active {
   color: var(--color-text);
 }
 
-nav a.router-link-exact-active:hover {
+nav a.active:hover {
   background-color: transparent;
 }
 
@@ -81,10 +78,19 @@ h3 {
   color: var(--color-heading);
 }
 
+#demo {
+  margin-block: 2rem;
+}
+
 ul {
   list-style-type: none;
   max-height: 100%;
   overflow-y: auto;
+  padding: 0;
+}
+
+li:first-child {
+  margin-top: 2rem;
 }
 
 li {
@@ -102,6 +108,13 @@ li {
     margin: 0 2rem 0 0;
   }
 
+  section {
+    display: flex;
+    place-items: center;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
   header .wrapper {
     display: flex;
     place-items: flex-start;
@@ -109,7 +122,6 @@ li {
   }
 
   nav {
-    text-align: left;
     margin-left: -1rem;
     font-size: 1rem;
 
@@ -121,6 +133,16 @@ li {
 @media (hover: hover) {
   a:hover {
     background-color: hsla(160, 100%, 37%, 0.2);
+  }
+
+  .phone {
+    display: none;
+  }
+}
+
+@media (hover: none) {
+  .desktop {
+    display: none;
   }
 }
 

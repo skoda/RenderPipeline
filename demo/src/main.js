@@ -65,6 +65,8 @@ if (document.location.search === '?about') {
   const about = document.querySelector('template#about')
   const content = document.querySelector('section#content')
   content.replaceChildren(about.content.cloneNode(true))
+  document.getElementById('about-link').classList.add('active')
 } else {
+  document.getElementById('demo-link').classList.add('active')
   initialize()
 }

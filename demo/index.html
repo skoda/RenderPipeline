@@ -15,13 +15,14 @@
       <div class="wrapper">
         <h1>Render Pipeline</h1>
         <h3>
-          A 3D rendering pipeline running entirely in software. Written in Typescript by
-          <a href="https://github.com/skoda">@skoda</a>, modified from my own graphics coursework at
-          <a href="https://www.digipen.edu">DigiPen</a>.
+          Full 3D rendering pipeline running entirely in software. Written in Typescript by
+          <a href="https://github.com/skoda">@skoda</a>, modified from
+          <a href="https://www.digipen.edu">DigiPen</a> graphics coursework.
         </h3>
         <nav>
-          <a href="./">Demo</a>
-          <a href="./?about" class="">About</a>
+          <a id="demo-link" href="./">Demo</a><a id="about-link"
+          href="./?about">About</a><a
+          href="https://github.com/skoda/RenderPipeline">Github</a>
         </nav>
       </div>
     </header>
@@ -32,8 +33,8 @@
         <div>
           <canvas id="screenbuffer" title="click to look around" width="640" height="360"></canvas>
           <div id="info">
-            <div>W-A-S-D move</div>
-            <div>↑↓←→ look (or click above)</div>
+            <div class="desktop">W-A-S-D move</div>
+            <div class="desktop">↑↓←→ look (or click above)</div>
             <div id="framerateView">&nbsp;</div>
           </div>
         </div>
@@ -42,35 +43,31 @@
     <template id="about">
       <ul>
         <li>
-          <h3>What?</h3>
-          A software renderer. Using no external libraries beyond what's native to JS in browsers,
-          render-pipeline is a fixed-function pipeline for rendering triangle based 3D primitives
-          into an HTML Canvas element.
+          <h3>What</h3>
+          Real-time, fully software based 3D rendering pipeline. Using no external libraries beyond
+          what's native to JS in browsers (a few Math functions and DOM objects), render-pipeline
+          can render triangle based 3D primitives directly to pixels in an HTML Canvas element.
         </li>
         <li>
-          <h3>When?</h3>
-          It came out of some school projects between 2004 and 2005. Around 2010 I cobbled
-          together that work into a version rendering a single cube while learning JavaScript. In
-          the early 2020s, I rebuilt it as a library in Typescript to add some functionality I'd
-          always wanted to add, like multiple triangle streams and primitive types, triangle
-          clipping, depth buffering, and others.
+          <h3>When and Where</h3>
+          It came out of my DigiPen coursework, particularly from CS200 and CS250 courses on
+          rasterization and 3D graphics in the early 2000s. Around 2010 I cobbled together that
+          work into a version <a href="https://chuckskoda.com/JSRender/">rendering a single
+          cube</a> while I was learning JavaScript. In 2023, I rebuilt it
+          <a href="https://github.com/skoda/RenderPipeline">as a library</a> while learning
+          Typescript to add some functionality I'd always wanted to build, like multiple triangle
+          streams and primitive types, triangle clipping, depth buffering, and others.
         </li>
         <li>
-          <h3>Where?</h3>
-          DigiPen coursework, particularly from CS200 and CS250 courses on rasterization and 3D
-          graphics. Later, hosting a simple rendered cube on my website. Now the library is
-          available on Github.
-        </li>
-        <li>
-          <h3>Why?</h3>
-          Typescript and the JavaScript virtual machine are not a good fit for a rendering
+          <h3>Why</h3>
+          Typescript and the JavaScript virtual machine are a terrible fit for a rendering
           pipeline, but it's fun to see how performant browsers have become. Maybe someone will
           learn something about 3D graphics from poking around. It's one of a few pet projects
           I kick around when picking up new tools and technology to use, and computer graphics has
           always been an area of interest to me.
         </li>
         <li>
-          <h3>How?</h3>
+          <h3>How</h3>
           Most of my learnings on graphics is dated, but much of it was from classes at DigiPen in
           the early aughts. What gaps were left from classes were largely filled in a few readings
           of <a href="https://www.realtimerendering.com">Real-Time Rendering</a> which is still a
@@ -78,7 +75,9 @@
         </li>
         <li>
           <h3>Who?</h3>
-          Chuck Skoda, a.k.a. @skoda on <a href="https://github.com/skoda">Github</a>, <a href="https://mastodon.social/@skoda">Mastodon</a>, and <a href="https://www.threads.net/@skoda">Threads</a>.
+          Chuck Skoda, a.k.a. @skoda on <a href="https://github.com/skoda">Github</a>,
+          <a href="https://mastodon.social/@skoda">Mastodon</a>, and
+          <a href="https://www.threads.net/@skoda">Threads</a>.
         </li>
       </ul>
     </template>
