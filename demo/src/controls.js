@@ -9,7 +9,8 @@ const KeyMap = {
   Left: 'ArrowLeft',
   Up: 'ArrowUp',
   Right: 'ArrowRight',
-  Down: 'ArrowDown'
+  Down: 'ArrowDown',
+  Touch: 'Touch'
 }
 
 let cam
@@ -17,7 +18,7 @@ const keysDown = new Set()
 const FLOOR_RADIUS_SQ = FLOOR_RADIUS * FLOOR_RADIUS
 
 export const Controls = {
-  init: (camera) => {
+  init: async (camera) => {
     cam = camera
 
     // Setup keyed movement WASD to move and ↑↓←→ to look
@@ -34,6 +35,25 @@ export const Controls = {
         document.pointerLockElement === canvas ? 'addEventListener' : 'removeEventListener'
       document[addOrRemove]('mousemove', Controls.mouseMovement, false)
     })
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault()
+      keysDown.add(KeyMap.Touch)
+    })
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault()
+      keysDown.delete(KeyMap.Touch)
+    })
+
+    // Setup looking with gyroscope
+    document.getElementById('motionButton').addEventListener('click', async () => {
+      const response = await DeviceMotionEvent.requestPermission()
+      if (response === 'granted') {
+        addEventListener('devicemotion', (event) => {
+          console.log(JSON.stringify(event))
+        })
+      }
+    })
   },
 
   mouseMovement: (e) => {
@@ -44,7 +64,8 @@ export const Controls = {
   inputTest: (perSecond, noFlying = true) => {
     const movementLock = new Vector3(1, noFlying ? 0 : 1, 1)
 
-    if (keysDown.has(KeyMap.W)) cam.moveForward(5 * perSecond, movementLock)
+    if (keysDown.has(KeyMap.W) || keysDown.has(KeyMap.Touch))
+      cam.moveForward(5 * perSecond, movementLock)
     else if (keysDown.has(KeyMap.S)) cam.moveBackward(5 * perSecond, movementLock)
 
     if (keysDown.has(KeyMap.A)) cam.moveLeft(5 * perSecond, movementLock)

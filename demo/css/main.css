@@ -130,7 +130,7 @@ li {
   }
 }
 
-@media (hover: hover) {
+@media (any-hover: hover) {
   a:hover {
     background-color: hsla(160, 100%, 37%, 0.2);
   }
@@ -140,7 +140,7 @@ li {
   }
 }
 
-@media (hover: none) {
+@media (any-hover: none) {
   .desktop {
     display: none;
   }
