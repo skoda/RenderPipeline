@@ -1,4 +1,4 @@
-import { Vector2, Vector3 } from '../lib/render-pipeline/index.js'
+import { Vector2, Vector3, clamp } from '../lib/render-pipeline/index.js'
 import { CANVAS_ID, FLOOR_RADIUS } from './consts.js'
 
 const KeyMap = {
@@ -10,7 +10,11 @@ const KeyMap = {
   Up: 'ArrowUp',
   Right: 'ArrowRight',
   Down: 'ArrowDown',
-  Touch: 'Touch'
+  Touch: 'Touch',
+  TiltRight: 'TiltRight',
+  TiltLeft: 'TiltLeft',
+  TiltUp: 'TiltUp',
+  TiltDown: 'TiltDown'
 }
 
 let cam
@@ -38,22 +42,35 @@ export const Controls = {
 
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault()
-      keysDown.add(KeyMap.Touch)
+      if (e.touches.length > 0) keysDown.add(KeyMap.Touch)
     })
     canvas.addEventListener('touchend', (e) => {
       e.preventDefault()
-      keysDown.delete(KeyMap.Touch)
+      if (e.touches.length === 0) keysDown.delete(KeyMap.Touch)
     })
 
-    // Setup looking with gyroscope
-    document.getElementById('motionButton').addEventListener('click', async () => {
+    // Setup looking with devicemotion
+    const motionButton = document.getElementById('motionButton')
+    const initializeMotion = async () => {
       const response = await DeviceMotionEvent.requestPermission()
       if (response === 'granted') {
         addEventListener('devicemotion', (event) => {
-          console.log(JSON.stringify(event))
+          const { x } = event.accelerationIncludingGravity
+          const { alpha } = event.rotationRate
+
+          const turn = ((clamp(Math.abs(x), 6, 0.5) - 0.5) * event.interval) / 3
+          if (x < -0.5) cam.turnLeft(turn)
+          else if (x > 0.5) cam.turnRight(turn)
+
+          const tilt = ((clamp(Math.abs(alpha), 30, 1) - 1) * event.interval) / 25
+          if (alpha > 1) cam.pitchUp(tilt)
+          else if (alpha < -1) cam.pitchDown(tilt)
         })
+        motionButton.removeEventListener('click', motionButton)
+        motionButton.style.visibility = 'hidden'
       }
-    })
+    }
+    motionButton.addEventListener('click', initializeMotion)
   },
 
   mouseMovement: (e) => {
@@ -74,8 +91,9 @@ export const Controls = {
     if (keysDown.has(KeyMap.Up)) cam.pitchUp(1 * perSecond)
     else if (keysDown.has(KeyMap.Down)) cam.pitchDown(1 * perSecond)
 
-    if (keysDown.has(KeyMap.Left)) cam.turnLeft(1 * perSecond)
-    else if (keysDown.has(KeyMap.Right)) cam.turnRight(1 * perSecond)
+    if (keysDown.has(KeyMap.Left) || keysDown.has(KeyMap.TiltLeft)) cam.turnLeft(1 * perSecond)
+    else if (keysDown.has(KeyMap.Right) || keysDown.has(KeyMap.TiltRight))
+      cam.turnRight(1 * perSecond)
 
     collisionCheck(cam)
   }
