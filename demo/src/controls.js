@@ -10,11 +10,7 @@ const KeyMap = {
   Up: 'ArrowUp',
   Right: 'ArrowRight',
   Down: 'ArrowDown',
-  Touch: 'Touch',
-  TiltRight: 'TiltRight',
-  TiltLeft: 'TiltLeft',
-  TiltUp: 'TiltUp',
-  TiltDown: 'TiltDown'
+  Touch: 'Touch'
 }
 
 let cam
@@ -91,9 +87,8 @@ export const Controls = {
     if (keysDown.has(KeyMap.Up)) cam.pitchUp(1 * perSecond)
     else if (keysDown.has(KeyMap.Down)) cam.pitchDown(1 * perSecond)
 
-    if (keysDown.has(KeyMap.Left) || keysDown.has(KeyMap.TiltLeft)) cam.turnLeft(1 * perSecond)
-    else if (keysDown.has(KeyMap.Right) || keysDown.has(KeyMap.TiltRight))
-      cam.turnRight(1 * perSecond)
+    if (keysDown.has(KeyMap.Left)) cam.turnLeft(1 * perSecond)
+    else if (keysDown.has(KeyMap.Right)) cam.turnRight(1 * perSecond)
 
     collisionCheck(cam)
   }
