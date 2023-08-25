@@ -139,7 +139,7 @@ i.ext-lnk {
   display: inline-block;
   width: 0.75em;
   height: 0.75em;
-  background-color: var(--col-tint-color);
+  background-color: currentColor;
   margin-inline: 0.2em;
   clip-path: polygon(
     50% 12.5%,

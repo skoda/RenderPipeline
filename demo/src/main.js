@@ -25,6 +25,14 @@ const initialize = async () => {
   Controls.init(camera)
   Scene.init()
 
+  let minY = null
+  const img = new Image()
+  img.src = 'img/galaxy.png'
+  // Only use the image after it's loaded
+  img.onload = () => {
+    minY = pipeline.height - img.height
+  }
+
   // Default light, slightly offset to light
   // non-celestial objects in the scene
   pipeline.light = Light.withOptions({
@@ -54,6 +62,15 @@ const initialize = async () => {
 
     Controls.inputTest(perSecond)
     pipeline.view = camera.viewMatrix()
+
+    // This should be the angle from the camera, we need X too
+    const yOffset = ((camera.heading.dot(camera.up) - 1) / -2) * minY
+
+    if (minY !== null) {
+      const pattern = pipeline.renderContext.createPattern(img, 'repeat-x')
+      pattern.setTransform(new DOMMatrix([1, 0, 0, 1, 0, yOffset]))
+      pipeline.clearFillStyle = pattern
+    }
 
     Scene.animate(perSecond, now - launchTime)
     Scene.addRenderStreams(pipeline)
