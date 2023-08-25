@@ -1,7 +1,42 @@
-@import './base.css';
+:root {
+  --col-tint-color: #c3228e;
 
-html, body {
+  --color-background: #fff;
+  --color-border: rgba(60, 60, 60, 0.12);
+  --color-heading: #222;
+  --color-text: rgb(70, 88, 106);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #181818;
+    --color-border: rgba(84, 84, 84, 0.48);
+    --color-heading: #f8f8f8;
+    --color-text: rgba(235, 235, 235, 0.64);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+html,
+body {
   height: 100%;
+}
+
+html {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -11,66 +46,6 @@ body {
   font-weight: normal;
 }
 
-a,
-.primary {
-  text-decoration: none;
-  color: hsl(320, 70%, 45%);
-  transition: 0.4s;
-}
-
-#framerateView {
-  text-align: right;
-}
-canvas {
-  cursor: pointer;
-  max-width: 100%;
-}
-
-#info {
-  display: flex;
-  justify-content: space-between;
-}
-
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-#logo {
-  --size: 125px;
-  display: block;
-  margin: 0 auto 2rem;
-  line-height: 100%;
-  font-size: var(--size);
-  width: var(--size);
-  height: var(--size);
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.active {
-  color: var(--color-text);
-}
-
-nav a.active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
 h3 {
   font-size: 1.2rem;
   font-weight: 500;
@@ -78,8 +53,71 @@ h3 {
   color: var(--color-heading);
 }
 
+a {
+  text-decoration: none;
+  color: var(--col-tint-color);
+  transition: 0.4s;
+
+  &:hover {
+    background-color: rgba(0, 189, 126, 0.2);
+  }
+}
+
+header {
+  line-height: 1.5;
+  max-height: 100vh;
+
+  & nav {
+    width: 100%;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 2rem;
+
+    & a {
+      display: inline-block;
+      padding: 0 1rem;
+      border-left: 1px solid var(--color-border);
+
+      &:first-of-type {
+        border: 0;
+      }
+
+      &.active {
+        color: var(--color-text);
+        &:hover {
+          background-color: transparent;
+        }
+      }
+    }
+  }
+
+  #logo {
+    --size: 125px;
+    display: block;
+    margin: 0 auto 2rem;
+    line-height: 100%;
+    font-size: var(--size);
+    width: var(--size);
+    height: var(--size);
+  }
+}
+
 #demo {
   margin-block: 2rem;
+
+  & canvas {
+    cursor: pointer;
+    max-width: 100%;
+  }
+
+  #info {
+    display: flex;
+    justify-content: space-between;
+
+    #framerateView {
+      text-align: right;
+    }
+  }
 }
 
 ul {
@@ -87,63 +125,44 @@ ul {
   max-height: 100%;
   overflow-y: auto;
   padding: 0;
-}
 
-li:first-child {
-  margin-top: 2rem;
-}
+  & li {
+    margin-bottom: 2rem;
 
-li {
-  margin-bottom: 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  #logo {
-    margin: 0 2rem 0 0;
-  }
-
-  section {
-    display: flex;
-    place-items: center;
-    max-height: 100%;
-    overflow: hidden;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
+    &:first-child {
+      margin-top: 2rem;
+    }
   }
 }
 
-@media (any-hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-
-  .phone {
-    display: none;
-  }
-}
-
-@media (any-hover: none) {
-  .desktop {
-    display: none;
-  }
+i.ext-lnk {
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  background-color: var(--col-tint-color);
+  margin-inline: 0.2em;
+  clip-path: polygon(
+    50% 12.5%,
+    50% 0%,
+    100% 0%,
+    100% 50%,
+    87.5% 50%,
+    87.5% 22.5%,
+    47.5% 62.5%,
+    37.5% 62.5%,
+    37.5% 52.5%,
+    77.5% 12.5%,
+    37.5% 12.5%,
+    37.5% 25%,
+    12.5% 25%,
+    12.5% 87.5%,
+    75% 87.5%,
+    75% 62.5%,
+    87.5% 62.5%,
+    87.5% 100%,
+    0% 100%,
+    0% 12.5%
+  );
 }
 
 @media (min-width: 1024px) {
@@ -164,5 +183,48 @@ li {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+  }
+
+  header {
+    display: flex;
+    place-items: center;
+    padding-right: 80px;
+
+    .wrapper {
+      display: flex;
+      place-items: flex-start;
+      flex-wrap: wrap;
+
+      & nav {
+        margin-left: -1rem;
+        font-size: 1rem;
+
+        padding: 1rem 0;
+        margin-top: 1rem;
+      }
+    }
+
+    #logo {
+      margin: 0 2rem 0 0;
+    }
+  }
+
+  section {
+    display: flex;
+    place-items: center;
+    max-height: 100%;
+    overflow: hidden;
+  }
+}
+
+@media (any-hover: hover) {
+  .phone {
+    display: none;
+  }
+}
+
+@media (any-hover: none) {
+  .desktop {
+    display: none;
   }
 }
