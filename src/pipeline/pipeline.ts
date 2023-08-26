@@ -81,9 +81,6 @@ export class Pipeline {
   width: number
   height: number
   clearFillStyle: string | CanvasGradient | CanvasPattern = 'rgb(0,0,0)'
-  get renderContext() {
-    return this.renderTarget.context
-  }
 
   // Depth and clipping
   depthBuffer: DepthBuffer
@@ -165,8 +162,8 @@ export class Pipeline {
   }
 
   clear() {
-    this.renderContext.fillStyle = this.clearFillStyle
-    this.renderContext.fillRect(0, 0, this.width, this.height)
+    this.renderTarget.context.fillStyle = this.clearFillStyle
+    this.renderTarget.context.fillRect(0, 0, this.width, this.height)
     this.frameBuffer = this.renderTarget.buffer
     this.depthBuffer.clear()
     this.rasterizer.setFrameBuffer(this.frameBuffer)

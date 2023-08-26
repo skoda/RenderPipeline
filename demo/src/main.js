@@ -45,7 +45,7 @@ const initialize = async () => {
   )
 
   // Gradient background to "clear" buffer for rendering
-  const bgGradient = pipeline.renderContext.createLinearGradient(0, 0, 0, pipeline.height)
+  const bgGradient = pipeline.renderTarget.context.createLinearGradient(0, 0, 0, pipeline.height)
   bgGradient.addColorStop(0, '#03051f')
   bgGradient.addColorStop(0.5, '#030200')
   bgGradient.addColorStop(1.0, '#050410')
