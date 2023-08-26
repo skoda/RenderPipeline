@@ -25,12 +25,13 @@ const initialize = async () => {
   Controls.init(camera)
   Scene.init()
 
-  let minY = null
   const img = new Image()
   img.src = 'img/galaxy.png'
-  // Only use the image after it's loaded
+  const bgSize = { loaded: false }
   img.onload = () => {
-    minY = pipeline.height - img.height
+    bgSize.halfHeightDiff = (pipeline.height - img.height) / 2
+    bgSize.width = img.width
+    bgSize.loaded = true
   }
 
   // Default light, slightly offset to light
@@ -60,15 +61,16 @@ const initialize = async () => {
     const now = performance.now()
     const perSecond = (now - frameTime) * 0.001
 
-    Controls.inputTest(perSecond)
+    Controls.processInput(perSecond)
     pipeline.view = camera.viewMatrix()
 
-    // This should be the angle from the camera, we need X too
-    const yOffset = ((camera.heading.dot(camera.up) - 1) / -2) * minY
-
-    if (minY !== null) {
+    // Offset the background position based on camera orientation
+    if (bgSize.loaded) {
+      const { halfHeightDiff: hhd, width: w } = bgSize
+      const yOffset = (hhd * camera.pitch) / camera.maxPitch + hhd
+      const xOffset = (-w * camera.yaw) / Math.PI
       const pattern = pipeline.renderContext.createPattern(img, 'repeat-x')
-      pattern.setTransform(new DOMMatrix([1, 0, 0, 1, 0, yOffset]))
+      pattern.setTransform(new DOMMatrix([1, 0, 0, 1, xOffset, yOffset]))
       pipeline.clearFillStyle = pattern
     }
 

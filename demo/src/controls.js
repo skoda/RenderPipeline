@@ -74,7 +74,7 @@ export const Controls = {
     cam.turnRight(e.movementX / 800)
   },
 
-  inputTest: (perSecond, noFlying = true) => {
+  processInput: (perSecond, noFlying = true) => {
     const movementLock = new Vector3(1, noFlying ? 0 : 1, 1)
 
     if (keysDown.has(KeyMap.W) || keysDown.has(KeyMap.Touch))
