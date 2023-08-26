@@ -5,9 +5,14 @@ import {
   Cylinder,
   Light,
   Matrix,
+  Primitive,
   Sphere,
+  Stream,
   TextureAddressingMode,
-  Vector3
+  TextureCoord,
+  Vector3,
+  Vertex,
+  VertexPattern
 } from '../lib/render-pipeline/index.js'
 import { DOWN_VEC, FLOOR_RADIUS, SUN_LIGHT, SUN_POSITION } from './consts.js'
 import { Textures } from './textures.js'
@@ -29,15 +34,26 @@ class Object {
     Object.all.push(obj)
     return obj
   }
-  runAnimate(frameTime, runTime) {
+  runAnimate(frameTime, runTime, camera) {
     if (this.animate) {
-      this.stream.worldMatrix = this.animate({ frameTime, runTime })
+      this.stream.worldMatrix = this.animate({ frameTime, runTime, camera })
     }
   }
 }
 
 export const Scene = {
   init: () => {
+    // Starfield
+    Object.create(generateStarfield(), {
+      ignoreDepth: true,
+      light: Light.withOptions({
+        ambt: new Color(1, 1, 1)
+      }),
+      animate: ({ camera }) => {
+        return Matrix.translationWithVector(camera.position)
+      }
+    })
+
     // Floor
     Object.create(Circle.generate(48, FLOOR_RADIUS, 4, Color.withWhite(), Color.withValue(0.5)), {
       texture: Textures.flooring,
@@ -112,11 +128,34 @@ export const Scene = {
     })
   },
 
-  animate: (frameTime, runTime) => {
-    Object.all.forEach((obj) => obj.runAnimate(frameTime, runTime))
+  animate: (frameTime, runTime, camera) => {
+    Object.all.forEach((obj) => obj.runAnimate(frameTime, runTime, camera))
   },
 
   addRenderStreams: (pipeline) => {
     Object.all.forEach((obj) => pipeline.addStream(obj.stream))
   }
+}
+
+const generateStarfield = () => {
+  const stream = new Stream()
+  const stars = []
+  const up = new Vector3(0, 1, 0)
+  for (let i = 400; --i; ) {
+    const normal = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+    normal.normalize()
+    const starSize = 0.04 + Math.random() * 0.08
+    const center = normal.clone().negate().scale(54)
+    const xAxis = Vector3.cross(normal, up).normalize().scale(starSize)
+    const yAxis = Vector3.cross(xAxis, normal).normalize().scale(starSize)
+    const tex = new TextureCoord(0, 0)
+    const white = Color.withWhite()
+    stars.push(new Vertex(yAxis.clone().add(center), normal, white, white, white, tex))
+    xAxis.scale(-0.8660254037844388)
+    yAxis.scale(-0.5)
+    stars.push(new Vertex(xAxis.clone().add(yAxis).add(center), normal, white, white, white, tex))
+    stars.push(new Vertex(xAxis.negate().add(yAxis).add(center), normal, white, white, white, tex))
+  }
+  stream.addPrimitive(new Primitive(VertexPattern.List, stars, false))
+  return stream
 }

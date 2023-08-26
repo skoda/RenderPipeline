@@ -25,15 +25,6 @@ const initialize = async () => {
   Controls.init(camera)
   Scene.init()
 
-  const img = new Image()
-  img.src = 'img/galaxy.png'
-  const bgSize = { loaded: false }
-  img.onload = () => {
-    bgSize.halfHeightDiff = (pipeline.height - img.height) / 2
-    bgSize.width = img.width
-    bgSize.loaded = true
-  }
-
   // Default light, slightly offset to light
   // non-celestial objects in the scene
   pipeline.light = Light.withOptions({
@@ -53,6 +44,13 @@ const initialize = async () => {
     Math.PI / 4
   )
 
+  // Gradient background to "clear" buffer for rendering
+  const bgGradient = pipeline.renderContext.createLinearGradient(0, 0, 0, pipeline.height)
+  bgGradient.addColorStop(0, '#03051f')
+  bgGradient.addColorStop(0.5, '#030200')
+  bgGradient.addColorStop(1.0, '#050410')
+  pipeline.clearFillStyle = bgGradient
+
   // Performance timers for doing frame length calculations
   const launchTime = performance.now()
   let frameTime = performance.now()
@@ -64,17 +62,7 @@ const initialize = async () => {
     Controls.processInput(perSecond)
     pipeline.view = camera.viewMatrix()
 
-    // Offset the background position based on camera orientation
-    if (bgSize.loaded) {
-      const { halfHeightDiff: hhd, width: w } = bgSize
-      const yOffset = (hhd * camera.pitch) / camera.maxPitch + hhd
-      const xOffset = (-w * camera.yaw) / Math.PI
-      const pattern = pipeline.renderContext.createPattern(img, 'repeat-x')
-      pattern.setTransform(new DOMMatrix([1, 0, 0, 1, xOffset, yOffset]))
-      pipeline.clearFillStyle = pattern
-    }
-
-    Scene.animate(perSecond, now - launchTime)
+    Scene.animate(perSecond, now - launchTime, camera)
     Scene.addRenderStreams(pipeline)
     frameTime = now
   }, true)
