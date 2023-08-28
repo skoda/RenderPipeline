@@ -3,6 +3,7 @@ import {
   Circle,
   Color,
   Cylinder,
+  gaussianRandom,
   Light,
   Matrix,
   Primitive,
@@ -67,7 +68,7 @@ export const Scene = {
     })
 
     // Central pillar
-    Object.create(Cylinder.generate(60, 0.65, 2), {
+    Object.create(Cylinder.generate(32, 0.65, 2), {
       texture: Textures.marble,
       worldMatrix: Matrix.translationWithXYZ(0, 1, 0)
     })
@@ -101,7 +102,7 @@ export const Scene = {
       const orbitTranslation = Matrix.translationWithVector(new Vector3(12, 0, 0).add(SUN_POSITION))
       return orbitRotation.multiplyMatrix(orbitTranslation)
     }
-    Object.create(Sphere.generate(32, 0.75, Color.withWhite(), new Color(0.95, 0.9, 0.65)), {
+    Object.create(Sphere.generate(30, 0.75, Color.withWhite(), new Color(0.95, 0.9, 0.65)), {
       texture: Textures.earth,
       light: earthLight,
       shininess: 25,
@@ -142,9 +143,9 @@ const generateStarfield = () => {
   const stars = []
   const up = new Vector3(0, 1, 0)
   for (let i = 400; --i; ) {
-    const normal = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+    const normal = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom())
     normal.normalize()
-    const starSize = 0.04 + Math.random() * 0.08
+    const starSize = 0.08 + Math.random() * 0.005
     const center = normal.clone().negate().scale(54)
     const xAxis = Vector3.cross(normal, up).normalize().scale(starSize)
     const yAxis = Vector3.cross(xAxis, normal).normalize().scale(starSize)

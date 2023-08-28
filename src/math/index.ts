@@ -1,4 +1,5 @@
 export * from './clamp.js'
+export * from './gaussianRandom.js'
 export * from './matrix.js'
 export * from './vector2.js'
 export * from './vector3.js'

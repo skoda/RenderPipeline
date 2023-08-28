@@ -32,6 +32,12 @@ export class TextureCoord {
     return l.clone().multiply(r)
   }
 
+  assign(t: TextureCoord) {
+    this.u = t.u
+    this.v = t.v
+    return this
+  }
+
   scale(s: number) {
     this.u *= s
     this.v *= s
@@ -64,7 +70,7 @@ export class TextureCoord {
 }
 
 export class Texture {
-  data: Uint8ClampedArray
+  data: number[]
   width: number
   height: number
 
@@ -98,19 +104,30 @@ export class Texture {
 
   private constructor(imageData: ImageData) {
     const { data, width, height } = imageData
-    this.data = data
+    this.data = new Array(3 * width * height)
+
+    const len = 4 * width * height
+    // Normalize data to color values used when reading to
+    // prevent additional divides per pixel when sampling
+    for (let i = 0, j = 0; i < len; ++i) {
+      this.data[j++] = data[i++] / 255
+      this.data[j++] = data[i++] / 255
+      this.data[j++] = data[i++] / 255
+    }
+
+    // Object.seal(this.data)
     this.width = width
     this.height = height
   }
 
   static addressingMethod = {
-    [TextureAddressingMode.Clamp]: (c: number, d: number) => clamp(Math.floor(c), d - 1),
+    [TextureAddressingMode.Clamp]: (c: number, d: number) => clamp(~~c, d - 1),
     [TextureAddressingMode.Wrap]: (c: number, d: number) => {
-      c = Math.floor(c) % d
+      c = ~~c % d
       return c < 0 ? c + d : c
     },
     [TextureAddressingMode.Mirror]: (c: number, d: number) => {
-      c = Math.abs(Math.floor(c)) % (d + d)
+      c = Math.abs(~~c) % (d + d)
       return c < d ? c : d + d - c - 1
     }
   }
@@ -120,10 +137,9 @@ export class Texture {
     const u = method(coord.u, this.width)
     const v = method(coord.v, this.height)
 
-    let i = (v * this.width + u) * 4
-
-    out.r = this.data[i++] / 255
-    out.g = this.data[i++] / 255
-    out.b = this.data[i] / 255
+    let i = (v * this.width + u) * 3
+    out.r = this.data[i++]
+    out.g = this.data[i++]
+    out.b = this.data[i]
   }
 }

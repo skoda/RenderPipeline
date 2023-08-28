@@ -74,11 +74,11 @@ export class Rasterizer {
 
   scanlineDraw(y: number, l: Vertex, r: Vertex) {
     let x = Math.ceil(l.pos.x)
-    const xEnd = Math.min(Math.ceil(r.pos.x), this.width) - 1
+    const xEnd = Math.ceil(r.pos.x) - 1
     const width = r.pos.x - l.pos.x
 
     // Setup interpolants
-    let z = l.pos.z // actually 1/z, which properly interpolates
+    let z = l.pos.z // actually 1/z, which properly interpolates in screen space
     const mz = (r.pos.z - l.pos.z) / width
     const t = l.tex.clone()
     const mt = TextureCoord.subtract(r.tex, l.tex).scale(1 / width)
@@ -88,17 +88,11 @@ export class Rasterizer {
     const mspec = Color.subtract(r.spec, l.spec).scale(256 / width)
 
     // Shift initial values by ceil() offset to ensure sub-pixel accuracy
-    let initialDiff = x - l.pos.x
-    if (x < 0) {
-      // Also clamp x to start within the buffer, we should clip in
-      // earlier pipeline stages to guarantee this
-      initialDiff += -x
-      x = 0
-    }
-    z += mz * initialDiff
-    t.add(mt.clone().scale(initialDiff))
-    diff.add(mdiff.clone().scale(initialDiff))
-    spec.add(mspec.clone().scale(initialDiff))
+    const offset = x - l.pos.x
+    z += mz * offset
+    t.add(mt.clone().scale(offset))
+    diff.add(mdiff.clone().scale(offset))
+    spec.add(mspec.clone().scale(offset))
 
     //Initialize index for nextPixel
     this.setBufferIndex(x, y)
@@ -106,6 +100,7 @@ export class Rasterizer {
 
     //Color objects to minimize object allocations in inner loop
     const color = Color.withBlack()
+    const tex = new TextureCoord(t.u, t.v)
 
     //Draw Scanline
     while (x++ <= xEnd) {
@@ -113,15 +108,15 @@ export class Rasterizer {
       const pass = this.depthBuffer.next(depth)
 
       if (this.texture) {
-        pass && this.texture.sample(t.clone().scale(depth), color)
-        t.add(mt)
+        pass && this.texture.sample(tex.scale(depth), color)
+        tex.assign(t.add(mt))
       } else {
         color.r = color.g = color.b = 1.0
       }
 
       if (pass) {
         color.multiply(diff).add(spec)
-        this.nextPixel(Math.floor(color.r), Math.floor(color.g), Math.floor(color.b))
+        this.nextPixel(~~color.r, ~~color.g, ~~color.b)
       } else {
         this.curIdx += 4
       }
@@ -147,7 +142,7 @@ export class Rasterizer {
       const mid = vtx[3 - (topIdx + botIdx)]
 
       //Setup Left/Right Vertex Indices
-      let ml: Vertex //
+      let ml: Vertex
       let mr: Vertex
       let mp: Vertex
       if (
@@ -209,7 +204,7 @@ export class Rasterizer {
       for (let i = 0; i < 2; ++i) {
         //Draw Triangle Half
         while (y <= yStop) {
-          if (y >= 0 && y < this.height) this.scanlineDraw(y, left, right)
+          this.scanlineDraw(y, left, right)
 
           left.pos.add(ml.pos)
           right.pos.add(mr.pos)

@@ -38,7 +38,7 @@ export class DepthBuffer {
   next(depth: number) {
     const idx = this.curIdx++
     if (this.skip) return true
-    const z = Math.floor((depth - this._minDepth) * this._scale)
+    const z = ~~((depth - this._minDepth) * this._scale)
 
     if (z > this.buffer[idx]) return false
     this.buffer[idx] = z
