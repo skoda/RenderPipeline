@@ -2,6 +2,8 @@ import { Vector3 } from '../math/index.js'
 import { Color, TextureCoord, Vertex } from '../rasterization/index.js'
 import { Stream, Primitive, VertexPattern } from './stream.js'
 
+type BoxFace = 'top' | 'bottom' | 'front' | 'back' | 'left' | 'right'
+
 export class Box {
   static generate(
     width = 1,
@@ -9,6 +11,7 @@ export class Box {
     depth = 1,
     diffuse = Color.withWhite(),
     specular = Color.withWhite(),
+    omit: BoxFace[] = [],
     proportionalUVs = true
   ): Stream {
     // Vertex orientation:
@@ -54,12 +57,12 @@ export class Box {
       stream.addPrimitive(new Primitive(VertexPattern.Fan, verts, false))
     }
 
-    constructFace(v0, v1, v2, v3, new Vector3(0, 0, -1), w, h) // -z
-    constructFace(v4, v5, v1, v0, new Vector3(-1, 0, 0), d, h) // -x
-    constructFace(v7, v6, v5, v4, new Vector3(0, 0, 1), w, h) // +z
-    constructFace(v3, v2, v6, v7, new Vector3(1, -1, 0), d, h) // +x
-    constructFace(v4, v0, v3, v7, new Vector3(0, 1, 0), w, d) // +y
-    constructFace(v1, v5, v6, v2, new Vector3(0, -1, 0), w, d) // -y
+    if (!omit.includes('front')) constructFace(v0, v1, v2, v3, new Vector3(0, 0, -1), w, h) // -z
+    if (!omit.includes('left')) constructFace(v4, v5, v1, v0, new Vector3(-1, 0, 0), d, h) // -x
+    if (!omit.includes('back')) constructFace(v7, v6, v5, v4, new Vector3(0, 0, 1), w, h) // +z
+    if (!omit.includes('right')) constructFace(v3, v2, v6, v7, new Vector3(1, -1, 0), d, h) // +x
+    if (!omit.includes('top')) constructFace(v4, v0, v3, v7, new Vector3(0, 1, 0), w, d) // +y
+    if (!omit.includes('bottom')) constructFace(v1, v5, v6, v2, new Vector3(0, -1, 0), w, d) // -y
 
     return stream
   }

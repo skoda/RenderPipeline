@@ -7,6 +7,7 @@ import {
   Target,
   Texture,
   TextureAddressingMode,
+  TextureSamplingMode,
   Vertex
 } from '../rasterization/index.js'
 import { Light } from './light.js'
@@ -25,24 +26,28 @@ const DEFAULT_MIN_DEPTH = 1
 
 export class PipelineSettings {
   texture?: Texture
-  textureMode = TextureAddressingMode.Clamp
+  addressingMode = TextureAddressingMode.Clamp
+  samplingMode = TextureSamplingMode.Point
   ignoreDepth = false
   light?: Light
   shininess?: number
 
   // Always set texture with Stream.loadTexture
   apply({
-    textureMode,
+    addressingMode,
+    samplingMode,
     ignoreDepth,
     light,
     shininess
   }: {
-    textureMode?: TextureAddressingMode
+    addressingMode?: TextureAddressingMode
+    samplingMode?: TextureSamplingMode
     ignoreDepth?: boolean
     light?: Light
     shininess?: number
   }) {
-    this.textureMode = textureMode ?? this.textureMode
+    this.addressingMode = addressingMode ?? this.addressingMode
+    this.samplingMode = samplingMode ?? this.samplingMode
     this.ignoreDepth = ignoreDepth ?? this.ignoreDepth
     this.light = light ?? this.light
     this.shininess = shininess ?? this.shininess
@@ -51,7 +56,8 @@ export class PipelineSettings {
   clone() {
     const clone = new PipelineSettings()
     clone.texture = this.texture
-    clone.textureMode = this.textureMode
+    clone.addressingMode = this.addressingMode
+    clone.samplingMode = this.samplingMode
     clone.ignoreDepth = this.ignoreDepth
     clone.light = this.light
     clone.shininess = this.shininess
@@ -177,7 +183,8 @@ export class Pipeline {
 
   applySettings(settings: PipelineSettings) {
     this.rasterizer.setTexture(settings.texture)
-    Texture.mode = settings.textureMode ?? TextureAddressingMode.Clamp
+    Texture.textureAddressingMode = settings.addressingMode ?? TextureAddressingMode.Clamp
+    Texture.textureSamplingMode = settings.samplingMode ?? TextureSamplingMode.Point
     this.light = settings.light ?? this.light
     this.shininess = settings.shininess ?? this.shininess
     this.depthBuffer.skip = settings.ignoreDepth

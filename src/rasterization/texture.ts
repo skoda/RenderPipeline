@@ -7,6 +7,11 @@ export enum TextureAddressingMode {
   Mirror
 }
 
+export enum TextureSamplingMode {
+  Point,
+  Linear
+}
+
 export class TextureCoord {
   u: number
   v: number
@@ -74,8 +79,14 @@ export class Texture {
   width: number
   height: number
 
+  sample(coord: TextureCoord, out: Color) {
+    Texture.sampleMethod(this, coord, out)
+  }
+
   static cache: Record<string, Texture> = {}
-  static mode = TextureAddressingMode.Clamp
+
+  static addressMethod: (c: number, d: number) => number
+  static sampleMethod: (tex: Texture, coord: TextureCoord, out: Color) => void
 
   static async withURL(url: string): Promise<Texture> {
     if (this.cache[url]) return this.cache[url]
@@ -120,26 +131,58 @@ export class Texture {
     this.height = height
   }
 
-  static addressingMethod = {
-    [TextureAddressingMode.Clamp]: (c: number, d: number) => clamp(~~c, d - 1),
-    [TextureAddressingMode.Wrap]: (c: number, d: number) => {
-      c = ~~c % d
-      return c < 0 ? c + d : c
-    },
-    [TextureAddressingMode.Mirror]: (c: number, d: number) => {
-      c = Math.abs(~~c) % (d + d)
-      return c < d ? c : d + d - c - 1
+  static set textureAddressingMode(val: TextureAddressingMode) {
+    const methods = {
+      [TextureAddressingMode.Clamp]: (c: number, d: number) => clamp(~~c, d - 1),
+      [TextureAddressingMode.Wrap]: (c: number, d: number) => {
+        c = ~~c % d
+        return c < 0 ? c + d : c
+      },
+      [TextureAddressingMode.Mirror]: (c: number, d: number) => {
+        c = Math.abs(~~c) % (d + d)
+        return c < d ? c : d + d - c - 1
+      }
     }
+    Texture.addressMethod = methods[val]
   }
 
-  sample(coord: TextureCoord, out: Color) {
-    const method = Texture.addressingMethod[Texture.mode]
-    const u = method(coord.u, this.width)
-    const v = method(coord.v, this.height)
+  static set textureSamplingMode(val: TextureSamplingMode) {
+    const methods = {
+      [TextureSamplingMode.Point]: (tex: Texture, coord: TextureCoord, out: Color) => {
+        const u = Texture.addressMethod(coord.u, tex.width)
+        const v = Texture.addressMethod(coord.v, tex.height)
 
-    let i = (v * this.width + u) * 3
-    out.r = this.data[i++]
-    out.g = this.data[i++]
-    out.b = this.data[i]
+        let i = (v * tex.width + u) * 3
+        out.r = tex.data[i++]
+        out.g = tex.data[i++]
+        out.b = tex.data[i]
+      },
+      [TextureSamplingMode.Linear]: (tex: Texture, { u, v }: TextureCoord, out: Color) => {
+        let ul = [u - 0.5, u + 0.5]
+        let vl = [v - 0.5, v + 0.5]
+        const u0scale = ~~ul[1] - ul[0]
+        const u1scale = 1 - u0scale
+        const v0scale = ~~vl[1] - vl[0]
+        const v1scale = 1 - v0scale
+        ul = ul.map((u) => Texture.addressMethod(u, tex.width))
+        vl = vl.map((v) => Texture.addressMethod(v, tex.height))
+
+        const coords = [
+          [ul[0], vl[0], u0scale * v0scale],
+          [ul[0], vl[1], u0scale * v1scale],
+          [ul[1], vl[0], u1scale * v0scale],
+          [ul[1], vl[1], u1scale * v1scale]
+        ]
+        out.r = out.g = out.b = 0
+
+        coords.forEach(([u, v, scale]) => {
+          let i = (v * tex.width + u) * 3
+          out.r += tex.data[i++] * scale
+          out.g += tex.data[i++] * scale
+          out.b += tex.data[i] * scale
+        })
+      }
+    }
+    Texture.sampleMethod = methods[val]
   }
 }

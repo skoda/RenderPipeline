@@ -2,13 +2,16 @@ import { Vector3 } from '../math/index.js'
 import { Color, TextureCoord, Vertex } from '../rasterization/index.js'
 import { Primitive, Stream, VertexPattern } from './stream.js'
 
+export type CylinderFace = 'top' | 'bottom' | 'sides'
+
 export class Cylinder {
   static generate(
     steps = 12,
     radius = 0.5,
     height = 1,
     diffuse = Color.withWhite(),
-    specular = Color.withWhite()
+    specular = Color.withWhite(),
+    omit: CylinderFace[] = []
   ) {
     const stream = new Stream()
     const top: Vertex[] = []
@@ -31,14 +34,14 @@ export class Cylinder {
           sideNrm,
           diffuse,
           specular,
-          new TextureCoord(Math.abs((2 * i) / steps - 1), 0)
+          new TextureCoord((2 * i) / steps, 0)
         ),
         new Vertex(
           new Vector3(cos * radius, -height, sin * radius),
           sideNrm,
           diffuse,
           specular,
-          new TextureCoord(Math.abs((2 * i) / steps - 1), 1)
+          new TextureCoord((2 * i) / steps, 1)
         )
       )
 
@@ -66,9 +69,11 @@ export class Cylinder {
       )
     }
 
-    stream.addPrimitive(new Primitive(VertexPattern.Fan, top, false))
-    stream.addPrimitive(new Primitive(VertexPattern.Fan, bottom, false))
-    stream.addPrimitive(new Primitive(VertexPattern.Strip, sides, false))
+    if (!omit.includes('top')) stream.addPrimitive(new Primitive(VertexPattern.Fan, top, false))
+    if (!omit.includes('bottom'))
+      stream.addPrimitive(new Primitive(VertexPattern.Fan, bottom, false))
+    if (!omit.includes('sides'))
+      stream.addPrimitive(new Primitive(VertexPattern.Strip, sides, false))
 
     return stream
   }

@@ -27,8 +27,9 @@ class Object {
     this.animate = animate
   }
   static create(stream, opts = {}) {
-    const { texture, textureMode, light, shininess, ignoreDepth, worldMatrix } = opts
-    stream.settings.apply({ light, textureMode, shininess, ignoreDepth })
+    const { texture, addressingMode, samplingMode, light, shininess, ignoreDepth, worldMatrix } =
+      opts
+    stream.settings.apply({ light, addressingMode, samplingMode, shininess, ignoreDepth })
     if (texture) stream.loadTexture(texture)
     if (worldMatrix) stream.worldMatrix = worldMatrix
     const obj = new Object(stream, opts.animate)
@@ -58,7 +59,7 @@ export const Scene = {
     // Floor
     Object.create(Circle.generate(48, FLOOR_RADIUS, 4, Color.withWhite(), Color.withValue(0.5)), {
       texture: Textures.flooring,
-      textureMode: TextureAddressingMode.Wrap,
+      addressingMode: TextureAddressingMode.Wrap,
       shininess: 2,
       worldMatrix: Matrix.rotationWithBasisVectors(
         new Vector3(0, -1, 0),
@@ -68,12 +69,16 @@ export const Scene = {
     })
 
     // Central pillar
-    Object.create(Cylinder.generate(32, 0.65, 2), {
-      texture: Textures.marble,
-      worldMatrix: Matrix.translationWithXYZ(0, 1, 0)
-    })
+    Object.create(
+      Cylinder.generate(32, 0.65, 1.75, Color.withWhite(), Color.withWhite(), ['bottom']),
+      {
+        texture: Textures.marble,
+        addressingMode: TextureAddressingMode.Mirror,
+        worldMatrix: Matrix.translationWithXYZ(0, 1.125, 0)
+      }
+    )
     // Pillar base
-    Object.create(Box.generate(2, 0.25, 2), {
+    Object.create(Box.generate(2, 0.25, 2, Color.withWhite(), Color.withWhite(), ['bottom']), {
       texture: Textures.marble,
       worldMatrix: Matrix.translationWithXYZ(0, 0.125, 0)
     })
